@@ -37,6 +37,19 @@ pub unsafe extern "C" fn strlen(mut s: *const c_char) -> usize {
 /// * `dst` and `src` must not overlap
 #[no_mangle]
 unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+    assert!(!src.is_null());
+    assert!(!dst.is_null());
+    assert_ne!(src, dst);
+    {
+        // Make sure not overlapping
+        let src = src as usize;
+        let dst = dst as usize;
+        if src > dst {
+            assert!(dst + n < src);
+        } else {
+            assert!(src + n < dst);
+        }
+    }
     for i in 0..n {
         unsafe {
             *(dst.add(i)) = *(src.add(i));
@@ -46,14 +59,13 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
 }
 
 // TODO: fix overlapping
+//
+// Currently this cals memcpy which will just panic if the buffers overlap
 #[no_mangle]
 extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
-    unsafe {
-        for i in 0..n {
-            *(dst.add(i)) = *(src.add(i));
-        }
-    }
-    dst
+    assert!(!src.is_null());
+    assert!(!dst.is_null());
+    unsafe { memcpy(dst, src, n) }
 }
 
 #[no_mangle]
