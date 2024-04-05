@@ -3,13 +3,9 @@
 #![feature(lang_items)]
 #![feature(c_variadic)]
 #![feature(naked_functions)]
-#![allow(unused_imports, internal_features)]
+#![allow(internal_features)]
 
-use core::{
-    ffi::{c_int, c_void},
-    fmt::{self, Write},
-    panic::PanicInfo,
-};
+use core::{fmt::Write, panic::PanicInfo};
 
 mod assert;
 mod crt0;

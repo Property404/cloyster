@@ -1,8 +1,6 @@
 use core::{
     ffi::{c_char, c_int, c_void, CStr},
-    fmt::{self, Write},
-    panic::PanicInfo,
-    ptr,
+    fmt, ptr,
 };
 
 const EOF: c_int = -1;

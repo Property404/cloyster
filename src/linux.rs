@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_imports, unused_variables)]
 use core::{
     cell::RefCell,
     ffi::{c_int, c_void},
