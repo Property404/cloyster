@@ -23,7 +23,9 @@ fn panic(info: &PanicInfo) -> ! {
     if err {
         let _ = writeln!(stdio::Stdout, "(write error while panicking)");
     }
-    loop {}
+    loop {
+        core::hint::spin_loop();
+    }
 }
 
 #[lang = "eh_personality"]
