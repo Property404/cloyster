@@ -1,0 +1,16 @@
+[package]
+name = "cloyster"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+syscalls = { version = "0.6.18", default-features = false }

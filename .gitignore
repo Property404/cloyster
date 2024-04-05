@@ -1,0 +1,56 @@
+# Ignore everything by default
+*
+
+# Directories
+!**/
+
+# Git
+!.gitignore
+
+# Shell
+!*.sh
+!*.bash
+
+# Debugger
+!*.gdb
+
+# Make
+!Makefile
+
+# Linker
+!*.ld
+
+# C
+!*.c
+!*.h
+
+# C++
+!*.cpp
+!*.hxx
+!*.cxx
+
+# GitHub workflows
+!*.yaml
+!*.yml
+
+# Assembly
+!*.asm
+!*.S
+
+# Text and Documentation
+!*.txt
+!*.md
+!reference/*.pdf
+!reference/*.dts
+
+# Rust
+!*.rs
+!*.toml
+!Cargo.lock
+!config
+
+# Dummy rootfs
+!dummy.ext4
+
+# Exclude build directories
+target/
