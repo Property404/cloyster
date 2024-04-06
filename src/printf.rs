@@ -189,22 +189,20 @@ mod tests {
 
     #[test]
     fn basic() {
-        unsafe {
-            check("", c"", MockVaList::new());
-            check("45", c"45", MockVaList::new());
-            check("45", c"%d", MockVaList::new().with(45));
-            check("[45]", c"[%d]", MockVaList::new().with(45));
-            check("[3141]", c"[%d%d]", MockVaList::new().with(31).with(41));
-            check(
-                "[hello]",
-                c"[%s]",
-                MockVaList::new().with_str(c"hello").with(41),
-            );
-            check(
-                "[hello41]",
-                c"[%s%d]",
-                MockVaList::new().with_str(c"hello").with(41),
-            );
-        }
+        check("", c"", MockVaList::new());
+        check("45", c"45", MockVaList::new());
+        check("45", c"%d", MockVaList::new().with(45));
+        check("[45]", c"[%d]", MockVaList::new().with(45));
+        check("[3141]", c"[%d%d]", MockVaList::new().with(31).with(41));
+        check(
+            "[hello]",
+            c"[%s]",
+            MockVaList::new().with_str(c"hello").with(41),
+        );
+        check(
+            "[hello41]",
+            c"[%s%d]",
+            MockVaList::new().with_str(c"hello").with(41),
+        );
     }
 }
