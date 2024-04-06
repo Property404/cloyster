@@ -13,4 +13,5 @@ panic = "abort"
 panic = "abort"
 
 [dependencies]
+spin = { version = "0.9.8", default-features = false, features = ["spin_mutex"] }
 syscalls = { version = "0.6.18", default-features = false }
