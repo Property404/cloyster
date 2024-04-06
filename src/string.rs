@@ -78,15 +78,38 @@ pub unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut
 }
 */
 
+/// Copies the value of `c` (converted to an unsigned char) into each of the first `n` characters
+/// of the object pointed to by `dst`.
+///
+/// # Safety
+/// `dst` must be a pointer to a region of memory that is valid for `n` bytes
+///
+/// # Bugs
+/// Currently panics on unexpected `c` input. This is not in accordance with the C standard
+///
+/// # Returns
+/// The value of `dst`
 #[no_mangle]
-pub unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) {
+pub unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) -> *mut u8 {
     unsafe {
         for i in 0..n {
             *(dst.add(i)) = u8::try_from(c).unwrap();
         }
     }
+    dst
 }
 
+/// Compares the first `n` characters of the object pointed to by `src` to the first `n`
+/// characters of the object pointed to by `src2`
+///
+/// # Returns
+///
+/// 0 if `src1` and `src2` are equal, otherwise returns the difference in value between the first
+///   mismatched bytes, returning a negative value if `src1` contains the lesser value.
+///
+/// # Safety
+///
+/// `src1` and `src2` must point to regions of memory that are valid for `n` bytes
 #[no_mangle]
 pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     unsafe {
@@ -100,7 +123,13 @@ pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c
     0
 }
 
+/// Identical to [memcmp], use that instead
+///
+/// # Safety
+///
+/// See [memcmp]
 #[no_mangle]
+#[deprecated = "Use memcmp instead"]
 pub unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     memcmp(src1, src2, n)
 }
