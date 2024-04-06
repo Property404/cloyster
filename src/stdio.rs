@@ -13,8 +13,7 @@ pub(crate) struct Stdout;
 impl crate::printf::Cout for Stdout {
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
-        // TODO: switch to unistd
-        if crate::linux::write(1, ptr::from_ref(s) as *const c_void, len) >= 0 {
+        if unsafe { crate::unistd::write(1, ptr::from_ref(s) as *const c_void, len) } >= 0 {
             Ok(())
         } else {
             Err(Errno::CloysterSyscallFailed)
@@ -47,8 +46,7 @@ pub unsafe extern "C" fn puts(s: *const c_char) -> c_int {
 
     let length = crate::string::strlen(s);
 
-    // TODO: switch to unistd
-    if crate::linux::write(1, s as *const c_void, length) < 0 {
+    if crate::unistd::write(1, s as *const c_void, length) < 0 {
         return EOF;
     }
 
@@ -77,8 +75,7 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
         .try_into()
         .expect("Argument to `putchar` must be a valid C character");
 
-    // TODO: switch to unistd
-    if crate::linux::write(1, ptr::from_ref(&c) as *const c_void, 1) < 0 {
+    if unsafe { crate::unistd::write(1, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
         return EOF;
     }
 
