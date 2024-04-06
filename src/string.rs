@@ -37,9 +37,15 @@ pub unsafe extern "C" fn strlen(mut s: *const c_char) -> usize {
 /// * `dst` and `src` must not overlap
 #[no_mangle]
 unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+    // XXX: Running unit tests, I get instances of memcpy with arguments 0x1, 0x1, 0x00,
+    // which is crazy. Need to figure out why this happens. This prevents panicking
+    if n == 0 {
+        return dst;
+    }
+
+    assert_ne!(src, dst);
     assert!(!src.is_null());
     assert!(!dst.is_null());
-    assert_ne!(src, dst);
     {
         // Make sure not overlapping
         let src = src as usize;
@@ -50,6 +56,7 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
             assert!(src + n <= dst);
         }
     }
+
     for i in 0..n {
         unsafe {
             *(dst.add(i)) = *(src.add(i));
