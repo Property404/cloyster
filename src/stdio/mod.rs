@@ -1,16 +1,15 @@
-use crate::{
-    errno::Errno,
-    printf::{printf_impl, Cout},
-};
+use crate::errno::Errno;
 use core::{
     ffi::{c_char, c_int, c_void},
     fmt, ptr,
 };
+mod printf;
+use printf::{printf_impl, Cout};
 
 const EOF: c_int = -1;
 
 pub(crate) struct Stdout;
-impl crate::printf::Cout for Stdout {
+impl printf::Cout for Stdout {
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
         if unsafe { crate::unistd::write(1, ptr::from_ref(s) as *const c_void, len) } >= 0 {

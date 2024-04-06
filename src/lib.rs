@@ -11,7 +11,6 @@ mod assert;
 #[cfg(not(test))]
 mod crt0;
 pub mod errno;
-mod printf;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
