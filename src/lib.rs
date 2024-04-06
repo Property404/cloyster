@@ -10,6 +10,7 @@ use core::{fmt::Write, panic::PanicInfo};
 mod assert;
 #[cfg(not(test))]
 mod crt0;
+pub mod errno;
 pub mod linux;
 mod printf;
 pub mod stdio;
