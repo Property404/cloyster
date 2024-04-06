@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![feature(thread_local)]
 #![feature(lang_items)]
 #![feature(c_variadic)]

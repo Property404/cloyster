@@ -3,8 +3,41 @@ use core::{
     fmt::{self, Write},
 };
 
+// VaList/VaListImpls can't be constructed, so we need a trait in order to create mock objects
+pub(crate) trait VaListLike {
+    // Annoyingly, VaArgSafe is a sealed trait, so we need a method for each type
+    unsafe fn next_int(&mut self) -> c_int;
+    unsafe fn next_ptr<T>(&mut self) -> *const T;
+}
+
+impl<'a> VaListLike for VaListImpl<'a> {
+    unsafe fn next_int(&mut self) -> c_int {
+        unsafe { self.arg::<c_int>() }
+    }
+
+    unsafe fn next_ptr<T>(&mut self) -> *const T {
+        unsafe { self.arg::<*const T>() }
+    }
+}
+
+impl<V: VaListLike> VaListLike for &mut V {
+    unsafe fn next_int(&mut self) -> c_int {
+        unsafe { (*self).next_int() }
+    }
+
+    unsafe fn next_ptr<T>(&mut self) -> *const T {
+        unsafe { (*self).next_ptr() }
+    }
+}
+
 pub(crate) trait Cout {
     fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()>;
+}
+
+impl<T: Cout> Cout for &mut T {
+    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()> {
+        (*self).put_cstr(cstr)
+    }
 }
 
 struct CountingCout<T: Cout> {
@@ -39,23 +72,23 @@ impl<T: Cout> From<T> for CountingCout<T> {
 unsafe fn parse_placeholder<T: Cout>(
     cout: &mut CountingCout<T>,
     fmt: &[u8],
-    args: &mut VaListImpl,
+    mut args: impl VaListLike,
 ) -> Result<usize, ()> {
     assert!(!fmt.is_empty() && fmt[0] == b'%');
     let fmt = &fmt[1..];
-    let mut changed = 2;
+    let mut changed = 1;
 
     if fmt[0] == b'd' {
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "{}", unsafe { args.arg::<c_int>() }).map_err(|_| ())?;
+        write!(cout, "{}", unsafe { args.next_int() }).map_err(|_| ())?;
+        changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
         write!(cout, "{}", unsafe {
-            CStr::from_ptr(args.arg::<*const c_char>())
-                .to_str()
-                .map_err(|_| ())?
+            CStr::from_ptr(args.next_ptr()).to_str().map_err(|_| ())?
         })
         .map_err(|_| ())?;
+        changed += 1;
     } else {
         todo!()
     }
@@ -66,7 +99,7 @@ unsafe fn parse_placeholder<T: Cout>(
 pub(crate) unsafe fn printf_impl(
     cout: impl Cout,
     fmt: *const c_char,
-    mut args: VaListImpl,
+    mut args: impl VaListLike,
 ) -> Result<c_int, ()> {
     assert!(!fmt.is_null());
     let fmt = unsafe { CStr::from_ptr(fmt) }.to_bytes();
@@ -95,7 +128,83 @@ pub(crate) unsafe fn printf_impl(
         }
     }
 
-    cout.put_cstr(&fmt[last..])?;
+    cout.put_cstr(&fmt[last..len])?;
 
     Ok(cout.count.try_into().unwrap())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::{fmt::Debug, ptr};
+    use std::collections::VecDeque;
+
+    struct MockVaList(VecDeque<usize>);
+
+    impl MockVaList {
+        fn new() -> Self {
+            Self(VecDeque::new())
+        }
+
+        fn with<T>(mut self, val: T) -> Self
+        where
+            T: TryInto<usize> + Debug,
+            T::Error: Debug,
+        {
+            self.0.push_back(val.try_into().expect("Convert error"));
+            self
+        }
+
+        fn with_str(mut self, val: &'static CStr) -> Self {
+            self.0.push_back(ptr::from_ref(val) as *const () as usize);
+            self
+        }
+    }
+
+    impl VaListLike for MockVaList {
+        unsafe fn next_int(&mut self) -> c_int {
+            self.0.pop_front().unwrap().try_into().unwrap()
+        }
+
+        unsafe fn next_ptr<T>(&mut self) -> *const T {
+            self.0.pop_front().unwrap() as *const T
+        }
+    }
+
+    impl Cout for String {
+        fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()> {
+            for c in cstr {
+                self.push((*c).try_into().unwrap());
+            }
+            Ok(())
+        }
+    }
+
+    fn check(res: &str, fmt: &CStr, va: impl Into<MockVaList>) {
+        let mut string = String::new();
+        let length = unsafe { printf_impl(&mut string, fmt.as_ptr(), va.into()).unwrap() };
+        assert_eq!(string, res);
+        assert_eq!(length, res.len().try_into().unwrap());
+    }
+
+    #[test]
+    fn basic() {
+        unsafe {
+            check("", c"", MockVaList::new());
+            check("45", c"45", MockVaList::new());
+            check("45", c"%d", MockVaList::new().with(45));
+            check("[45]", c"[%d]", MockVaList::new().with(45));
+            check("[3141]", c"[%d%d]", MockVaList::new().with(31).with(41));
+            check(
+                "[hello]",
+                c"[%s]",
+                MockVaList::new().with_str(c"hello").with(41),
+            );
+            check(
+                "[hello41]",
+                c"[%s%d]",
+                MockVaList::new().with_str(c"hello").with(41),
+            );
+        }
+    }
 }
