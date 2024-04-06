@@ -1,4 +1,7 @@
-use crate::printf::{printf_impl, Cout};
+use crate::{
+    errno::Errno,
+    printf::{printf_impl, Cout},
+};
 use core::{
     ffi::{c_char, c_int, c_void},
     fmt, ptr,
@@ -8,13 +11,13 @@ const EOF: c_int = -1;
 
 pub(crate) struct Stdout;
 impl crate::printf::Cout for Stdout {
-    fn put_cstr(&mut self, s: &[u8]) -> Result<(), ()> {
+    fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
         // TODO: switch to unistd
         if crate::linux::write(1, ptr::from_ref(s) as *const c_void, len) >= 0 {
             Ok(())
         } else {
-            Err(())
+            Err(Errno::CloysterSyscallFailed)
         }
     }
 }
@@ -96,5 +99,5 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
-    printf_impl(Stdout, fmt, _args).unwrap_or(-1)
+    printf_impl(Stdout, fmt, _args).unwrap_or_else(|err| err.as_negative())
 }

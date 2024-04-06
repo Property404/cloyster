@@ -1,3 +1,4 @@
+use crate::errno::Errno;
 use core::{
     ffi::{c_char, c_int, CStr, VaListImpl},
     fmt::{self, Write},
@@ -31,11 +32,11 @@ impl<V: VaListLike> VaListLike for &mut V {
 }
 
 pub(crate) trait Cout {
-    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()>;
+    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno>;
 }
 
 impl<T: Cout> Cout for &mut T {
-    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()> {
+    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
         (*self).put_cstr(cstr)
     }
 }
@@ -56,7 +57,7 @@ impl<T: Cout> fmt::Write for CountingCout<T> {
 }
 
 impl<T: Cout> Cout for CountingCout<T> {
-    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()> {
+    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
         self.inner.put_cstr(cstr)?;
         self.count += cstr.len();
         Ok(())
@@ -73,21 +74,18 @@ unsafe fn parse_placeholder<T: Cout>(
     cout: &mut CountingCout<T>,
     fmt: &[u8],
     mut args: impl VaListLike,
-) -> Result<usize, ()> {
+) -> Result<usize, Errno> {
     assert!(!fmt.is_empty() && fmt[0] == b'%');
     let fmt = &fmt[1..];
     let mut changed = 1;
 
     if fmt[0] == b'd' {
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "{}", unsafe { args.next_int() }).map_err(|_| ())?;
+        write!(cout, "{}", unsafe { args.next_int() })?;
         changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "{}", unsafe {
-            CStr::from_ptr(args.next_ptr()).to_str().map_err(|_| ())?
-        })
-        .map_err(|_| ())?;
+        cout.put_cstr(CStr::from_ptr(args.next_ptr()).to_bytes())?;
         changed += 1;
     } else {
         todo!()
@@ -100,7 +98,7 @@ pub(crate) unsafe fn printf_impl(
     cout: impl Cout,
     fmt: *const c_char,
     mut args: impl VaListLike,
-) -> Result<c_int, ()> {
+) -> Result<c_int, Errno> {
     assert!(!fmt.is_null());
     let fmt = unsafe { CStr::from_ptr(fmt) }.to_bytes();
     let len = fmt.len();
@@ -172,7 +170,7 @@ mod tests {
     }
 
     impl Cout for String {
-        fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), ()> {
+        fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
             for c in cstr {
                 self.push((*c).try_into().unwrap());
             }
