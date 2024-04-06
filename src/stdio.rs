@@ -6,7 +6,7 @@ use core::{
 
 const EOF: c_int = -1;
 
-pub struct Stdout;
+pub(crate) struct Stdout;
 impl crate::printf::Cout for Stdout {
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), ()> {
         let len = s.len();

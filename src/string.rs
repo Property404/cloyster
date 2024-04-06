@@ -36,7 +36,7 @@ pub unsafe extern "C" fn strlen(mut s: *const c_char) -> usize {
 /// * `dst` and `src` must be pointer to memory regions with at least `n` valid bits
 /// * `dst` and `src` must not overlap
 #[no_mangle]
-unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+pub unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     // XXX: Running unit tests, I get instances of memcpy with arguments 0x1, 0x1, 0x00,
     // which is crazy. Need to figure out why this happens. This prevents panicking
     if n == 0 {
@@ -70,7 +70,7 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
 // Currently this cals memcpy which will just panic if the buffers overlap
 /*
 #[no_mangle]
-extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+pub unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     assert!(!src.is_null());
     assert!(!dst.is_null());
     unimplemented!()
@@ -79,7 +79,7 @@ extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
 */
 
 #[no_mangle]
-extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) {
+pub unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) {
     unsafe {
         for i in 0..n {
             *(dst.add(i)) = u8::try_from(c).unwrap();
@@ -88,7 +88,7 @@ extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) {
 }
 
 #[no_mangle]
-extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
+pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     unsafe {
         for i in 0..n {
             let res = c_int::from(*(src1.add(i))) - c_int::from(*(src2.add(i)));
@@ -101,7 +101,7 @@ extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
 }
 
 #[no_mangle]
-extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
+pub unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     memcmp(src1, src2, n)
 }
 
