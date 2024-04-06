@@ -6,6 +6,6 @@
 int main() {
     const char* message = "Hello, world!";
     for (int i=0; i<5;i++) {
-        printf("%s <%d>\n", message, i);
+        printf("hillo%d|314\n", i);
     }
 }

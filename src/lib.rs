@@ -8,11 +8,14 @@
 use core::{fmt::Write, panic::PanicInfo};
 
 mod assert;
+#[cfg(not(test))]
 mod crt0;
 pub mod linux;
+mod printf;
 pub mod stdio;
 pub mod string;
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     let err = writeln!(stdio::Stdout, "CLOYSTER: {info}").is_err();
@@ -24,5 +27,6 @@ fn panic(info: &PanicInfo) -> ! {
     }
 }
 
+#[cfg(not(test))]
 #[lang = "eh_personality"]
 fn rust_eh_personality() {}

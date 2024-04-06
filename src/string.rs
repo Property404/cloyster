@@ -45,9 +45,9 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
         let src = src as usize;
         let dst = dst as usize;
         if src > dst {
-            assert!(dst + n < src);
+            assert!(dst + n <= src);
         } else {
-            assert!(src + n < dst);
+            assert!(src + n <= dst);
         }
     }
     for i in 0..n {
@@ -61,12 +61,15 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
 // TODO: fix overlapping
 //
 // Currently this cals memcpy which will just panic if the buffers overlap
+/*
 #[no_mangle]
 extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     assert!(!src.is_null());
     assert!(!dst.is_null());
-    unsafe { memcpy(dst, src, n) }
+    unimplemented!()
+    //unsafe { memcpy(dst, src, n) }
 }
+*/
 
 #[no_mangle]
 extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) {
@@ -93,4 +96,17 @@ extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
 #[no_mangle]
 extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     memcmp(src1, src2, n)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn string_length() {
+        unsafe {
+            assert_eq!(strlen(c"dagan".as_ptr()), 5);
+            assert_eq!(strlen(c"".as_ptr()), 0);
+        }
+    }
 }

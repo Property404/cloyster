@@ -1,20 +1,26 @@
+use crate::printf::{printf_impl, Cout};
 use core::{
-    ffi::{c_char, c_int, c_void, CStr},
+    ffi::{c_char, c_int, c_void},
     fmt, ptr,
 };
 
 const EOF: c_int = -1;
 
 pub struct Stdout;
-impl fmt::Write for Stdout {
-    fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
+impl crate::printf::Cout for Stdout {
+    fn put_cstr(&mut self, s: &[u8]) -> Result<(), ()> {
         let len = s.len();
         // TODO: switch to unistd
-        if crate::linux::write(1, s.as_ptr() as *const c_void, len) >= 0 {
+        if crate::linux::write(1, ptr::from_ref(s) as *const c_void, len) >= 0 {
             Ok(())
         } else {
-            Err(fmt::Error)
+            Err(())
         }
+    }
+}
+impl fmt::Write for Stdout {
+    fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
+        self.put_cstr(s.as_bytes()).map_err(|_| fmt::Error)
     }
 }
 
@@ -33,7 +39,7 @@ impl fmt::Write for Stdout {
 /// `s` must be a pointer to a null-terminated string
 #[no_mangle]
 #[must_use]
-unsafe extern "C" fn puts(s: *const c_char) -> c_int {
+pub unsafe extern "C" fn puts(s: *const c_char) -> c_int {
     assert!(!s.is_null());
 
     let length = crate::string::strlen(s);
@@ -63,7 +69,7 @@ unsafe extern "C" fn puts(s: *const c_char) -> c_int {
 /// The character written as an unsigned char cast to int, or EOF on error
 #[no_mangle]
 #[must_use]
-extern "C" fn putchar(c: c_int) -> c_int {
+pub extern "C" fn putchar(c: c_int) -> c_int {
     let c: c_char = c
         .try_into()
         .expect("Argument to `putchar` must be a valid C character");
@@ -90,33 +96,5 @@ extern "C" fn putchar(c: c_int) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
-    assert!(!fmt.is_null());
-    let fmt = unsafe { CStr::from_ptr(fmt) }.to_bytes();
-
-    let mut char_count = 0;
-    let mut idx = 0;
-    while idx < fmt.len() {
-        if fmt[idx] == b'%' {
-            if fmt[idx + 1] == b'd' {
-            } else if fmt[idx + 1] == b'%' {
-                if putchar(b'%'.into()) < 0 {
-                    return -1;
-                }
-                idx += 1;
-                char_count += 1;
-            } else {
-                unimplemented!();
-            }
-        } else {
-            if putchar(fmt[idx].into()) < 0 {
-                return -1;
-            }
-            char_count += 1;
-        }
-        idx += 1;
-    }
-    char_count
-    /*
-    sum += args.arg::<usize>();
-    */
+    printf_impl(Stdout, fmt, _args).unwrap_or(-1)
 }
