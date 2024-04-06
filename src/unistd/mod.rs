@@ -1,5 +1,8 @@
 use crate::errno::set_errno;
-use core::ffi::{c_int, c_void};
+use core::{
+    ffi::{c_int, c_void},
+    ptr,
+};
 
 mod linux;
 use linux as os;
@@ -29,7 +32,45 @@ pub unsafe extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> c
 pub extern "C" fn _exit(status: c_int) -> ! {
     // SAFETY: This exits the process, but doesn't clean anything up. Not sure if that's enough to
     // justify marking this function unsafe
-    unreachable!("Failed to exit process {:?}", unsafe {
-        os::sys_exit(status)
-    });
+    let rval = unsafe { os::sys_exit(status) };
+    unreachable!("Failed to exit process {rval:?}");
+}
+
+/// Wrapper for `mmap` syscall
+///
+/// # Safety
+///
+/// See man page
+#[no_mangle]
+pub unsafe extern "C" fn mmap(
+    addr: *const c_void,
+    length: usize,
+    prot: c_int,
+    flags: c_int,
+    fd: c_int,
+    off_t: u64,
+) -> *mut c_void {
+    match unsafe { os::sys_mmap(addr, length, prot, flags, fd, off_t) } {
+        Err(errno) => {
+            set_errno(errno);
+            ptr::null_mut()
+        }
+        Ok(val) => val,
+    }
+}
+
+/// Wrapper for `munmap` syscall
+///
+/// # Safety
+///
+/// See man page
+#[no_mangle]
+pub unsafe extern "C" fn munmap(addr: *const c_void, length: usize) -> c_int {
+    match unsafe { os::sys_munmap(addr, length) } {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
 }
