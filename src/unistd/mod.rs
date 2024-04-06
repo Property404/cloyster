@@ -23,3 +23,13 @@ pub unsafe extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> c
         Ok(val) => val,
     }
 }
+
+/// Exits the current process with status `status`
+#[no_mangle]
+pub extern "C" fn _exit(status: c_int) -> ! {
+    // SAFETY: This exits the process, but doesn't clean anything up. Not sure if that's enough to
+    // justify marking this function unsafe
+    unreachable!("Failed to exit process {:?}", unsafe {
+        os::sys_exit(status)
+    });
+}

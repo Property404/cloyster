@@ -13,6 +13,7 @@ mod crt0;
 pub mod errno;
 mod printf;
 pub mod stdio;
+pub mod stdlib;
 pub mod string;
 pub mod unistd;
 
@@ -23,9 +24,7 @@ fn panic(info: &PanicInfo) -> ! {
     if err {
         let _ = writeln!(stdio::Stdout, "(write error while panicking)");
     }
-    loop {
-        core::hint::spin_loop();
-    }
+    stdlib::abort();
 }
 
 #[cfg(not(test))]

@@ -1,4 +1,4 @@
-use core::{arch::asm, ffi::c_int};
+use core::arch::asm;
 
 #[naked]
 #[no_mangle]
@@ -7,16 +7,9 @@ extern "C" fn _start() {
         asm!(
             "
         call main
-        call exit
+        call _exit
             ",
             options(noreturn)
         );
-    }
-}
-
-#[no_mangle]
-extern "C" fn exit(_: c_int) {
-    loop {
-        core::hint::spin_loop();
     }
 }
