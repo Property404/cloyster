@@ -4,7 +4,11 @@ use core::{
     ptr,
 };
 
+pub mod types;
+
+#[cfg(target_os = "linux")]
 mod linux;
+#[cfg(target_os = "linux")]
 use linux as os;
 
 /// Writes up to `count` bytes from `buf` referred to by the file descriptor `fd`
@@ -45,12 +49,12 @@ pub extern "C" fn _exit(status: c_int) -> ! {
 pub unsafe extern "C" fn mmap(
     addr: *const c_void,
     length: usize,
-    prot: c_int,
-    flags: c_int,
+    prot: types::MmapProtFlags,
+    flags: types::MmapFlags,
     fd: c_int,
     off_t: u64,
 ) -> *mut c_void {
-    match unsafe { os::sys_mmap(addr, length, prot, flags, fd, off_t) } {
+    match unsafe { os::sys_mmap(addr, length, prot.bits(), flags.bits(), fd, off_t) } {
         Err(errno) => {
             set_errno(errno);
             ptr::null_mut()
