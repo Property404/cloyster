@@ -39,3 +39,29 @@ bitflags! {
         const PROT_EXEC = 0x4;
     }
 }
+
+bitflags! {
+    /// Mode flags for the `open()` and related syscalls
+    ///
+    ///
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    #[repr(transparent)]
+    pub struct ModeFlags: c_int {
+    }
+}
+
+bitflags! {
+    /// Flags for the `open()` syscall
+    ///
+    ///
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    #[repr(transparent)]
+    pub struct OpenFlags: c_int {
+        /// Read Only
+        const O_RDONLY = 0x0;
+        /// Write only
+        const O_WRONLY = 0x1;
+        /// Read or write
+        const O_RDWR = 0x2;
+    }
+}

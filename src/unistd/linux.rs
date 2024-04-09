@@ -1,6 +1,6 @@
 use crate::errno::Errno;
 use core::{
-    ffi::{c_int, c_void},
+    ffi::{c_char, c_int, c_void},
     ptr,
 };
 use syscalls::Sysno;
@@ -53,6 +53,29 @@ pub(crate) unsafe fn sys_brk(addr: *const c_void) -> Result<*mut c_void, Errno> 
 pub(crate) unsafe fn sys_sbrk(offset: isize) -> Result<*mut c_void, Errno> {
     let addr = sys_brk(ptr::null())?;
     sys_brk(addr.wrapping_byte_offset(offset))
+}
+
+pub(crate) unsafe fn sys_open(
+    pathname: *const c_char,
+    flags: c_int,
+    mode_t: c_int,
+) -> Result<c_int, Errno> {
+    unsafe {
+        syscalls::syscall3(
+            Sysno::open,
+            pathname as usize,
+            flags.try_into()?,
+            mode_t.try_into()?,
+        )
+    }
+    .map_err(|_| Errno::CloysterUnknown)
+    .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+}
+
+pub(crate) fn sys_close(fd: c_int) -> Result<c_int, Errno> {
+    unsafe { syscalls::syscall1(Sysno::close, fd.try_into()?) }
+        .map_err(|_| Errno::CloysterUnknown)
+        .and_then(|val| c_int::try_from(val).map_err(Errno::from))
 }
 
 pub(crate) unsafe fn sys_exit(status: c_int) -> Result<c_int, Errno> {

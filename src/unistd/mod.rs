@@ -1,6 +1,6 @@
 use crate::errno::set_errno;
 use core::{
-    ffi::{c_int, c_void},
+    ffi::{c_char, c_int, c_void},
     ptr,
 };
 
@@ -92,5 +92,38 @@ pub unsafe extern "C" fn sbrk(size: isize) -> *mut c_void {
             ptr::null_mut()
         }
         Ok(val) => val.wrapping_byte_offset(-size),
+    }
+}
+
+/// Wrapper for `open` syscall
+///
+/// # Safety
+///
+/// `pathname` must point to a valid null-terminated string
+/// `mode` MUST be specified correctly if `O_CREAT` or `O_TEMPFILE` is specified in `flags`
+#[no_mangle]
+pub unsafe extern "C" fn open(
+    pathname: *const c_char,
+    flags: types::OpenFlags,
+    mode: types::ModeFlags,
+) -> c_int {
+    match unsafe { os::sys_open(pathname, flags.bits(), mode.bits()) } {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
+}
+
+/// Close file descriptor
+#[no_mangle]
+pub extern "C" fn close(fd: c_int) -> c_int {
+    match os::sys_close(fd) {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(_val) => 0,
     }
 }
