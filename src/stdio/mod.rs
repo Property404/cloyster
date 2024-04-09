@@ -164,6 +164,9 @@ pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> 
     for mode in unsafe { CStr::from_ptr(mode) }.to_bytes() {
         open_flags |= match *mode {
             b'r' => OpenFlags::O_RDONLY,
+            // This flag is ignored on POSIX
+            // TODO: Don't ignore this for Windows
+            b'b' => continue,
             b => {
                 panic!("Invalid flag to fopen(): {b}");
             }
