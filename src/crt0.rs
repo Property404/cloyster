@@ -16,6 +16,7 @@ extern "C" fn _start() {
             "
         # Pass argc/argv to main
         pop	rdi
+        mov rsi, rsp
         call _cloyster_start
             ",
             options(noreturn)
