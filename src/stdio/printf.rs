@@ -8,7 +8,7 @@ use core::{
 pub(crate) trait VaListLike {
     // Annoyingly, VaArgSafe is a sealed trait, so we need a method for each type
     unsafe fn next_int(&mut self) -> c_int;
-    unsafe fn next_ptr<T>(&mut self) -> *const T;
+    unsafe fn next_ptr(&mut self) -> usize;
 }
 
 impl<'a> VaListLike for VaListImpl<'a> {
@@ -16,8 +16,8 @@ impl<'a> VaListLike for VaListImpl<'a> {
         unsafe { self.arg::<c_int>() }
     }
 
-    unsafe fn next_ptr<T>(&mut self) -> *const T {
-        unsafe { self.arg::<*const T>() }
+    unsafe fn next_ptr(&mut self) -> usize {
+        unsafe { self.arg::<usize>() }
     }
 }
 
@@ -26,7 +26,7 @@ impl<V: VaListLike> VaListLike for &mut V {
         unsafe { (*self).next_int() }
     }
 
-    unsafe fn next_ptr<T>(&mut self) -> *const T {
+    unsafe fn next_ptr(&mut self) -> usize {
         unsafe { (*self).next_ptr() }
     }
 }
@@ -83,13 +83,18 @@ unsafe fn parse_placeholder<T: Cout>(
         // Safe IFF previous safety guarantees hold up
         write!(cout, "{}", unsafe { args.next_int() })?;
         changed += 1;
-    } else if fmt[0] == b'p' {
+    } else if fmt[0] == b'x' {
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "{:p}", unsafe { args.next_ptr::<()>() })?;
+        write!(cout, "0x{:08x}", unsafe { args.next_int() })?;
+        changed += 1;
+    } else if fmt[0] == b'p' {
+        let val = unsafe { args.next_ptr() };
+        // Safe IFF previous safety guarantees hold up
+        write!(cout, "0x{:08x}", val)?;
         changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
-        cout.put_cstr(CStr::from_ptr(args.next_ptr()).to_bytes())?;
+        cout.put_cstr(CStr::from_ptr(args.next_ptr() as *const c_char).to_bytes())?;
         changed += 1;
     } else {
         todo!()
@@ -168,15 +173,15 @@ mod tests {
             self.0.pop_front().unwrap().try_into().unwrap()
         }
 
-        unsafe fn next_ptr<T>(&mut self) -> *const T {
-            self.0.pop_front().unwrap() as *const T
+        unsafe fn next_ptr(&mut self) -> usize {
+            self.0.pop_front().unwrap()
         }
     }
 
     impl Cout for String {
         fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
             for c in cstr {
-                self.push((*c).try_into().unwrap());
+                self.push((*c).into());
             }
             Ok(())
         }
