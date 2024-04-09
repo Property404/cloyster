@@ -15,4 +15,4 @@ Only supports x86_64 on Linux
 
 ## License
 
-GPLv3
+LGPLv2.1 OR LGPLv3 at your option

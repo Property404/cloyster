@@ -42,7 +42,7 @@
 !*.md
 !reference/*.pdf
 !reference/*.dts
-!LICENSE
+!LICENSE*
 
 # Rust
 !*.rs
