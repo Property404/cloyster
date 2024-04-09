@@ -21,9 +21,9 @@ pub mod unistd;
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    let err = writeln!(stdio::Stdout, "CLOYSTER: {info}").is_err();
+    let err = writeln!(stdio::Descriptor::stderr(), "CLOYSTER: {info}").is_err();
     if err {
-        let _ = writeln!(stdio::Stdout, "(write error while panicking)");
+        let _ = writeln!(stdio::Descriptor::stderr(), "(write error while panicking)");
     }
     stdlib::abort();
 }

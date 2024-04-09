@@ -8,18 +8,30 @@ use printf::{printf_impl, Cout};
 
 const EOF: c_int = -1;
 
-pub(crate) struct Stdout;
-impl printf::Cout for Stdout {
+pub(crate) struct Descriptor(c_int);
+
+impl Descriptor {
+    pub(crate) fn stdout() -> Self {
+        Self(1)
+    }
+
+    pub(crate) fn stderr() -> Self {
+        Self(2)
+    }
+}
+
+impl printf::Cout for Descriptor {
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
-        if unsafe { crate::unistd::write(1, ptr::from_ref(s) as *const c_void, len) } >= 0 {
+        if unsafe { crate::unistd::write(self.0, ptr::from_ref(s) as *const c_void, len) } >= 0 {
             Ok(())
         } else {
             Err(Errno::CloysterSyscallFailed)
         }
     }
 }
-impl fmt::Write for Stdout {
+
+impl fmt::Write for Descriptor {
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
         self.put_cstr(s.as_bytes()).map_err(|_| fmt::Error)
     }
@@ -95,5 +107,5 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
-    printf_impl(Stdout, fmt, _args).unwrap_or_else(|err| err.as_negative())
+    printf_impl(Descriptor::stdout(), fmt, _args).unwrap_or_else(|err| err.as_negative())
 }
