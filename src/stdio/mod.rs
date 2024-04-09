@@ -31,6 +31,7 @@ impl Descriptor {
 pub struct File {
     fd: Descriptor,
     error: c_int,
+    offset: u64,
 }
 
 impl printf::Cout for Descriptor {
@@ -167,6 +168,7 @@ pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> 
                 *ptr = File {
                     fd: Descriptor(fd),
                     error: 0,
+                    offset: 0,
                 };
             }
             ptr
@@ -208,6 +210,16 @@ pub unsafe extern "C" fn fread(
     let val = crate::unistd::read(fd.0, ptr, count);
 
     if let Ok(val) = val.try_into() {
+        unsafe {
+            match u64::try_from(val) {
+                Ok(offset) => {
+                    (*file).offset += offset;
+                }
+                Err(err) => {
+                    (*file).error = Errno::from(err).as_positive();
+                }
+            }
+        };
         val
     } else {
         unsafe {
@@ -240,10 +252,29 @@ pub unsafe extern "C" fn fseek(stream: *mut File, offset: c_long, whence: c_int)
     if val < 0 {
         unsafe {
             (*stream).error = -val;
+            return -1;
         }
-    }
+    };
 
-    val
+    0
+}
+
+/// Get current offset of file
+///
+/// # Safety
+///
+/// `file` must have been previously allocated with [fopen]
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn ftell(file: *mut File) -> c_long {
+    assert!(!file.is_null());
+    unsafe {
+        (*file).offset.try_into().unwrap_or_else(|err| {
+            let err = Errno::from(err);
+            errno::set_errno(err);
+            -1
+        })
+    }
 }
 
 /// Close a file
