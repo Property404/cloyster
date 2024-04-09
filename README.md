@@ -12,3 +12,7 @@ function needs to be set to `time()`)
 Header files not included (just use glibc's)
 
 Only supports x86_64 on Linux
+
+## License
+
+GPLv3
