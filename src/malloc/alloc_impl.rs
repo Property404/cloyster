@@ -61,9 +61,11 @@ impl<T: MemoryExtender> Allocator<T> {
         })
     }
 
-    fn claim_more(&mut self) -> Result<NonNull<Node>, Errno> {
+    fn claim_more(&mut self, required: usize) -> Result<NonNull<Node>, Errno> {
+        let required = required.align_up(PAGE_SIZE);
+
         unsafe {
-            let node = NonNull::new(self.memory_extender.sbrk(PAGE_SIZE)? as *mut Node)
+            let node = NonNull::new(self.memory_extender.sbrk(required)? as *mut Node)
                 .ok_or(Errno::CloysterAlloc)?;
             assert_eq!(
                 node.as_ptr(),
@@ -72,12 +74,12 @@ impl<T: MemoryExtender> Allocator<T> {
 
             *node.as_ptr() = Node {
                 free: true,
-                size: PAGE_SIZE - HDR_SIZE,
+                size: required - HDR_SIZE,
                 next_node: None,
                 prev_node: None,
             };
 
-            self.size += PAGE_SIZE;
+            self.size += required;
             self.total_claims = self.total_claims.saturating_add(1);
 
             Ok(node)
@@ -110,7 +112,7 @@ impl<T: MemoryExtender> Allocator<T> {
 
         loop {
             let Some(mut noderef) = node else {
-                let mut newnode = self.claim_more()?;
+                let mut newnode = self.claim_more(requested_size)?;
                 unsafe {
                     if let Some(mut prev_node) = prev_node {
                         prev_node.as_mut().next_node = Some(newnode);
@@ -119,7 +121,6 @@ impl<T: MemoryExtender> Allocator<T> {
                     assert!(prev_node.is_some());
                 }
                 node = Some(newnode);
-                assert_eq!(unsafe { newnode.as_ref() }.size, PAGE_SIZE - MIN_ALIGN);
                 continue;
             };
             let noderef = unsafe { noderef.as_mut() };
@@ -229,6 +230,16 @@ mod tests {
 
         assert_eq!(allocator.allocations, 0);
         assert!(allocator.total_claims < 10);
+    }
+
+    #[test]
+    fn allocate_more_than_a_page() {
+        let mut allocator = Allocator::new(MockExtender::new(PAGE_SIZE * 10)).unwrap();
+        unsafe {
+            let area = allocator.alloc(PAGE_SIZE * 5 + 3).unwrap();
+            allocator.free(area).unwrap();
+        }
+        assert_eq!(allocator.allocations, 0);
     }
 
     #[test]
