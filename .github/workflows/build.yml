@@ -19,6 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Switch to nightly
+        run: rustup default nightly
+
       - name: Lint
         run: cargo fmt --check
 
