@@ -3,18 +3,18 @@ mod usize_ext;
 
 use crate::errno::Errno;
 use alloc_impl::{Allocator, DefaultMemoryExtender};
-use core::ffi::c_void;
+use core::{cell::OnceCell, ffi::c_void};
 use spin::Mutex;
 
-static ALLOCATOR: Mutex<Option<Allocator<DefaultMemoryExtender>>> = Mutex::new(None);
+static ALLOCATOR: Mutex<OnceCell<Allocator<DefaultMemoryExtender>>> = Mutex::new(OnceCell::new());
 
 pub fn malloc(size: usize) -> Result<*mut c_void, Errno> {
     let mut allocator = ALLOCATOR.lock();
-    if allocator.is_none() {
-        *allocator = Some(Allocator::new(DefaultMemoryExtender)?);
-    };
-    let allocator = allocator.as_mut().expect("Bug: allocator not initialized");
-    allocator.alloc(size)
+    allocator.get_or_init(|| Allocator::new(DefaultMemoryExtender).unwrap());
+    allocator
+        .get_mut()
+        .expect("Bug: allocator not initialized")
+        .alloc(size)
 }
 
 /// Free a previously allocation section of memory
@@ -24,7 +24,7 @@ pub fn malloc(size: usize) -> Result<*mut c_void, Errno> {
 /// with Cloyster's implementation of malloc (or related memory allocation functions)
 pub unsafe fn free(ptr: *mut c_void) -> Result<(), Errno> {
     let mut allocator = ALLOCATOR.lock();
-    let allocator = allocator.as_mut().expect("Bug: allocator not initialized");
+    let allocator = allocator.get_mut().expect("Bug: allocator not initialized");
     unsafe { allocator.free(ptr) }
 }
 
