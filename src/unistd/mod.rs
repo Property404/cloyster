@@ -5,7 +5,7 @@ use core::{
 };
 
 pub mod types;
-use types::off_t;
+use crate::types::{off_t, time_t};
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -153,6 +153,25 @@ pub extern "C" fn close(fd: c_int) -> c_int {
 #[no_mangle]
 pub extern "C" fn lseek(fd: c_int, offset: off_t, whence: c_int) -> c_int {
     match os::sys_lseek(fd, offset, whence) {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
+}
+
+/// Get time
+///
+/// # Safety
+///
+/// `tloc` must be NULL or a valid time_t
+#[no_mangle]
+pub extern "C" fn time(time: *mut time_t) -> time_t {
+    if !time.is_null() {
+        unimplemented!("Cloyster only currently accepts the argument to time() to be NULL");
+    }
+    match os::sys_time() {
         Err(errno) => {
             set_errno(errno);
             -1

@@ -1,4 +1,7 @@
-use crate::{errno::Errno, unistd::types::off_t};
+use crate::{
+    errno::Errno,
+    types::{off_t, time_t},
+};
 use core::{
     ffi::{c_char, c_int, c_void},
     ptr,
@@ -95,6 +98,12 @@ pub(crate) fn sys_close(fd: c_int) -> Result<c_int, Errno> {
     unsafe { syscalls::syscall1(Sysno::close, fd.try_into()?) }
         .map_err(|_| Errno::CloysterUnknown)
         .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+}
+
+pub(crate) fn sys_time() -> Result<time_t, Errno> {
+    unsafe { syscalls::syscall1(Sysno::time, 0) }
+        .map_err(|_| Errno::CloysterUnknown)
+        .and_then(|val| time_t::try_from(val).map_err(Errno::from))
 }
 
 pub(crate) unsafe fn sys_exit(status: c_int) -> Result<c_int, Errno> {

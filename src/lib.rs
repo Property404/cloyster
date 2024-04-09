@@ -16,6 +16,7 @@ pub mod malloc;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
+pub mod types;
 pub mod unistd;
 
 #[cfg(not(test))]

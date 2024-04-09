@@ -135,9 +135,7 @@ pub unsafe extern "C" fn putc(c: c_int, stream: *mut File) -> c_int {
         .try_into()
         .expect("Argument to `putc` must be a valid C character");
 
-    let fd = unsafe {
-        (*stream).fd
-    };
+    let fd = unsafe { (*stream).fd };
 
     if unsafe { crate::unistd::write(fd.0, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
         return EOF;
@@ -154,9 +152,7 @@ pub unsafe extern "C" fn putc(c: c_int, stream: *mut File) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn getc(stream: *mut File) -> c_int {
-    let fd = unsafe {
-        (*stream).fd
-    };
+    let fd = unsafe { (*stream).fd };
 
     let mut c: c_char = 0;
 
