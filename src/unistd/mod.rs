@@ -78,3 +78,19 @@ pub unsafe extern "C" fn munmap(addr: *const c_void, length: usize) -> c_int {
         Ok(val) => val,
     }
 }
+
+/// Wrapper for `brk` syscall
+///
+/// # Safety
+///
+/// No
+#[no_mangle]
+pub unsafe extern "C" fn sbrk(size: isize) -> *mut c_void {
+    match unsafe { os::sys_sbrk(size) } {
+        Err(errno) => {
+            set_errno(errno);
+            ptr::null_mut()
+        }
+        Ok(val) => val.wrapping_byte_offset(-size),
+    }
+}

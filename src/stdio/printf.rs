@@ -83,6 +83,10 @@ unsafe fn parse_placeholder<T: Cout>(
         // Safe IFF previous safety guarantees hold up
         write!(cout, "{}", unsafe { args.next_int() })?;
         changed += 1;
+    } else if fmt[0] == b'p' {
+        // Safe IFF previous safety guarantees hold up
+        write!(cout, "{:p}", unsafe { args.next_ptr::<()>() })?;
+        changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
         cout.put_cstr(CStr::from_ptr(args.next_ptr()).to_bytes())?;

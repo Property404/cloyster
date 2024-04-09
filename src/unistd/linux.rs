@@ -1,5 +1,8 @@
 use crate::errno::Errno;
-use core::ffi::{c_int, c_void};
+use core::{
+    ffi::{c_int, c_void},
+    ptr,
+};
 use syscalls::Sysno;
 
 pub(crate) unsafe fn sys_write(
@@ -39,6 +42,17 @@ pub(crate) unsafe fn sys_munmap(addr: *const c_void, length: usize) -> Result<c_
     unsafe { syscalls::syscall2(Sysno::mmap, addr as usize, length) }
         .map_err(|_| Errno::CloysterUnknown)
         .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+}
+
+pub(crate) unsafe fn sys_brk(addr: *const c_void) -> Result<*mut c_void, Errno> {
+    unsafe { syscalls::syscall1(Sysno::brk, addr as usize) }
+        .map_err(|_| Errno::CloysterUnknown)
+        .map(|val| val as *mut c_void)
+}
+
+pub(crate) unsafe fn sys_sbrk(offset: isize) -> Result<*mut c_void, Errno> {
+    let addr = sys_brk(ptr::null())?;
+    sys_brk(addr.wrapping_byte_offset(offset))
 }
 
 pub(crate) unsafe fn sys_exit(status: c_int) -> Result<c_int, Errno> {

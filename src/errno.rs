@@ -37,6 +37,8 @@ pub enum Errno {
     CloysterConversionError,
     /// Generic syscall failure. More information can usually be found in `errno`
     CloysterSyscallFailed,
+    /// Allocation failure
+    CloysterAlloc,
 }
 
 impl Errno {
