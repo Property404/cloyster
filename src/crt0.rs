@@ -6,6 +6,8 @@ extern "C" fn _start() {
     unsafe {
         asm!(
             "
+        # Pass argc/argv to main
+        pop	rdi
         call main
         call _exit
             ",
