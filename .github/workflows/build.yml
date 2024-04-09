@@ -26,7 +26,8 @@ jobs:
         run: rustup default nightly
 
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: rustup add component clippy && \
+          cargo clippy -- -D warnings
 
       - name: Check docs
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
