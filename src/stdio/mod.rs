@@ -270,6 +270,8 @@ pub unsafe extern "C" fn fseek(stream: *mut File, offset: c_long, whence: c_int)
         }
     };
 
+    (*stream).offset += u64::try_from(val).expect("BUG: we already checked for negative");
+
     0
 }
 
