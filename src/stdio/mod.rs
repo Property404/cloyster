@@ -30,6 +30,7 @@ impl Descriptor {
 #[derive(Debug)]
 pub struct File {
     fd: Descriptor,
+    error: c_int,
 }
 
 impl printf::Cout for Descriptor {
@@ -163,13 +164,55 @@ pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> 
         Ok(ptr) => {
             let ptr = ptr as *mut File;
             unsafe {
-                *ptr = File { fd: Descriptor(fd) };
+                *ptr = File {
+                    fd: Descriptor(fd),
+                    error: 0,
+                };
             }
             ptr
         }
         Err(errno) => {
             errno::set_errno(errno);
             ptr::null_mut()
+        }
+    }
+}
+
+/// Read a file into `ptr`
+///
+/// # Safety
+///
+/// * `file` must have been previously allocated with [fopen]
+/// * `ptr` must be a valid writable region of memory at least [size*nmemb] bytes long
+/// *
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn fread(
+    ptr: *mut c_void,
+    size: usize,
+    nmemb: usize,
+    file: *mut File,
+) -> usize {
+    assert!(!file.is_null());
+    assert!(!ptr.is_null());
+
+    let fd = unsafe { (*file).fd };
+
+    let Some(count) = size.checked_mul(nmemb) else {
+        unsafe {
+            (*file).error = Errno::CloysterOverflow.as_positive();
+        }
+        return 0;
+    };
+
+    let val = crate::unistd::read(fd.0, ptr, count);
+
+    if let Ok(val) = val.try_into() {
+        val
+    } else {
+        unsafe {
+            (*file).error = -val;
+            0
         }
     }
 }

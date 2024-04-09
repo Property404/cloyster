@@ -44,8 +44,8 @@ pub enum Errno {
 }
 
 impl Errno {
-    // Return as positive value, to set errno
-    fn as_positive(self) -> c_int {
+    /// Return as positive value, to set errno
+    pub fn as_positive(self) -> c_int {
         self as c_int
     }
 
