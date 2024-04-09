@@ -4,59 +4,14 @@ use crate::{
 };
 use core::{
     ffi::{c_char, c_int, c_long, c_void, CStr},
-    fmt, mem, ptr,
+    mem, ptr,
 };
+mod file;
+pub(crate) use file::{init, Descriptor, File};
 mod printf;
-use printf::{printf_impl, Cout};
+use printf::printf_impl;
 
 const EOF: c_int = -1;
-
-#[no_mangle]
-static stdin: c_int = 0;
-#[no_mangle]
-static stdout: c_int = 1;
-#[no_mangle]
-static stderr: c_int = 2;
-
-#[repr(transparent)]
-#[derive(Copy, Clone, Debug)]
-pub(crate) struct Descriptor(c_int);
-
-impl Descriptor {
-    pub(crate) fn stdout() -> Self {
-        Self(1)
-    }
-
-    pub(crate) fn stderr() -> Self {
-        Self(2)
-    }
-}
-
-/// File type used in stdlib file functions (fopen(), fclose(), fprintf(), etc)
-#[repr(C)]
-#[derive(Debug)]
-pub struct File {
-    fd: Descriptor,
-    error: c_int,
-    offset: u64,
-}
-
-impl printf::Cout for Descriptor {
-    fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
-        let len = s.len();
-        if unsafe { crate::unistd::write(self.0, ptr::from_ref(s) as *const c_void, len) } >= 0 {
-            Ok(())
-        } else {
-            Err(Errno::CloysterSyscallFailed)
-        }
-    }
-}
-
-impl fmt::Write for Descriptor {
-    fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
-        self.put_cstr(s.as_bytes()).map_err(|_| fmt::Error)
-    }
-}
 
 /// Output string with terminating newline
 ///
