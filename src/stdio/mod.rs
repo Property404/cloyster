@@ -1,13 +1,18 @@
-use crate::errno::Errno;
+use crate::{
+    errno::{self, Errno},
+    malloc::{free, malloc},
+};
 use core::{
-    ffi::{c_char, c_int, c_void},
-    fmt, ptr,
+    ffi::{c_char, c_int, c_void, CStr},
+    fmt, mem, ptr,
 };
 mod printf;
 use printf::{printf_impl, Cout};
 
 const EOF: c_int = -1;
 
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
 pub(crate) struct Descriptor(c_int);
 
 impl Descriptor {
@@ -18,6 +23,13 @@ impl Descriptor {
     pub(crate) fn stderr() -> Self {
         Self(2)
     }
+}
+
+/// File type used in stdlib file functions (fopen(), fclose(), fprintf(), etc)
+#[repr(C)]
+#[derive(Debug)]
+pub struct File {
+    fd: Descriptor,
 }
 
 impl printf::Cout for Descriptor {
@@ -108,4 +120,71 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
 #[must_use]
 pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
     printf_impl(Descriptor::stdout(), fmt, _args).unwrap_or_else(|err| err.as_negative())
+}
+
+/// Like [printf] but writes to a file
+///
+/// # Safety
+///
+/// See [printf]
+///
+/// Additionally, `stream` must not overlap with `fmt` or any argument
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn fprintf(stream: *mut File, fmt: *const c_char, _args: ...) -> c_int {
+    printf_impl(unsafe { (*stream).fd }, fmt, _args).unwrap_or_else(|err| err.as_negative())
+}
+
+/// Open a file
+///
+/// # Safety
+///
+/// `pathname` and `mode` must be valid, non-overlapping pointers to null-terminated strings
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> *mut File {
+    use crate::unistd::types::{ModeFlags, OpenFlags};
+    assert!(!pathname.is_null());
+    assert!(!mode.is_null());
+
+    let mut open_flags = OpenFlags::empty();
+    for mode in unsafe { CStr::from_ptr(mode) }.to_bytes() {
+        open_flags |= match *mode {
+            b'r' => OpenFlags::O_RDONLY,
+            b => {
+                panic!("Invalid flag to fopen(): {b}");
+            }
+        }
+    }
+
+    let fd = unsafe { crate::unistd::open(pathname, open_flags, ModeFlags::default()) };
+
+    match malloc(mem::size_of::<File>()) {
+        Ok(ptr) => {
+            let ptr = ptr as *mut File;
+            unsafe {
+                *ptr = File { fd: Descriptor(fd) };
+            }
+            ptr
+        }
+        Err(errno) => {
+            errno::set_errno(errno);
+            ptr::null_mut()
+        }
+    }
+}
+
+/// Close a file
+///
+/// # Safety
+///
+/// `file` must have been previously allocated with [fopen]
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn fclose(file: *mut File) -> c_int {
+    assert!(!file.is_null());
+    match free(file as *mut c_void) {
+        Err(err) => err.as_negative(),
+        Ok(()) => 0,
+    }
 }

@@ -51,6 +51,34 @@ bitflags! {
     #[derive(Copy, Clone, PartialEq, Eq)]
     #[repr(transparent)]
     pub struct ModeFlags: c_int {
+        /// Others have execute permissions
+        const OTHERS_EXECUTE = 0x1;
+        /// Others have execute permissions
+        const OTHERS_WRITE = 0x2;
+        /// Others have execute permissions
+        const OTHERS_READ = 0x4;
+        /// Group has execute permissions
+        const GROUP_EXECUTE = 0x8;
+        /// Group has execute permissions
+        const GROUP_WRITE = 0x10;
+        /// Group has execute permissions
+        const GROUP_READ = 0x20;
+        /// Group has execute permissions
+        const OWNER_EXECUTE = 0x40;
+        /// Group has execute permissions
+        const OWNER_WRITE = 0x80;
+        /// Group has execute permissions
+        const OWNER_READ = 0x100;
+    }
+}
+
+impl Default for ModeFlags {
+    fn default() -> Self {
+        Self::OWNER_WRITE
+            | Self::OWNER_READ
+            | Self::GROUP_WRITE
+            | Self::GROUP_READ
+            | Self::OTHERS_READ
     }
 }
 
