@@ -11,6 +11,13 @@ use printf::{printf_impl, Cout};
 
 const EOF: c_int = -1;
 
+#[no_mangle]
+static stdin: c_int = 0;
+#[no_mangle]
+static stdout: c_int = 1;
+#[no_mangle]
+static stderr: c_int = 2;
+
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Descriptor(c_int);
@@ -101,6 +108,59 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
         .expect("Argument to `putchar` must be a valid C character");
 
     if unsafe { crate::unistd::write(1, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
+        return EOF;
+    }
+
+    c.into()
+}
+
+/// Output single extended-ASCII character. Note that while this function accepts an integer, it
+/// will panic with any input greater than 0xFF.
+///
+/// # C Signature
+///
+/// `int putc(int c, FILE *stream);`
+///
+/// # Returns
+///
+/// The character written as an unsigned char cast to int, or EOF on error
+///
+/// # Safety
+///
+/// `stream` must be a valid stream opened with [fopen]
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn putc(c: c_int, stream: *mut File) -> c_int {
+    let c: c_char = c
+        .try_into()
+        .expect("Argument to `putc` must be a valid C character");
+
+    let fd = unsafe {
+        (*stream).fd
+    };
+
+    if unsafe { crate::unistd::write(fd.0, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
+        return EOF;
+    }
+
+    c.into()
+}
+
+/// Get one C character from file stream
+///
+/// # Safety
+///
+/// Same as [read]
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn getc(stream: *mut File) -> c_int {
+    let fd = unsafe {
+        (*stream).fd
+    };
+
+    let mut c: c_char = 0;
+
+    if unsafe { crate::unistd::read(fd.0, ptr::from_mut(&mut c) as *mut c_void, 1) } < 0 {
         return EOF;
     }
 
