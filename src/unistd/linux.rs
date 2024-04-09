@@ -15,6 +15,12 @@ pub(crate) unsafe fn sys_write(
         .and_then(|val| c_int::try_from(val).map_err(Errno::from))
 }
 
+pub(crate) unsafe fn sys_read(fd: c_int, buf: *mut c_void, count: usize) -> Result<c_int, Errno> {
+    unsafe { syscalls::syscall3(Sysno::read, fd.try_into()?, buf as usize, count) }
+        .map_err(|_| Errno::CloysterUnknown)
+        .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+}
+
 pub(crate) unsafe fn sys_mmap(
     addr: *const c_void,
     length: usize,

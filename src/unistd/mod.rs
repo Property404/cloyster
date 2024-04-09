@@ -31,6 +31,26 @@ pub unsafe extern "C" fn write(fd: c_int, buf: *const c_void, count: usize) -> c
     }
 }
 
+/// Read up to `count` bytes to `buf` referred to by the file descriptor `fd`
+///
+/// # Returns
+/// On success, the number of bytes read. On error, `read()` returns -1 and sets `errno`
+/// appropriately
+///
+/// # Safety
+/// `buf` must point to a valid writable region of memory that is valid for at least `count` bytes
+#[no_mangle]
+pub unsafe extern "C" fn read(fd: c_int, buf: *mut c_void, count: usize) -> c_int {
+    assert!(!buf.is_null());
+    match unsafe { os::sys_read(fd, buf, count) } {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
+}
+
 /// Exits the current process with status `status`
 #[no_mangle]
 pub extern "C" fn _exit(status: c_int) -> ! {
