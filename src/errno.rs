@@ -35,6 +35,8 @@ pub enum Errno {
     CloysterFmtError,
     /// Failed integer conversion
     CloysterConversionError,
+    /// Integer Overflow
+    CloysterOverflow,
     /// Generic syscall failure. More information can usually be found in `errno`
     CloysterSyscallFailed,
     /// Allocation failure

@@ -17,6 +17,24 @@ pub fn malloc(size: usize) -> Result<*mut c_void, Errno> {
         .alloc(size)
 }
 
+pub fn calloc(nmemb: usize, size: usize) -> Result<*mut c_void, Errno> {
+    let size = nmemb.checked_mul(size).ok_or(Errno::CloysterOverflow)?;
+    let ptr = malloc(size)?;
+    unsafe {
+        crate::string::memset(ptr as *mut u8, 0x00, size);
+    }
+    Ok(ptr)
+}
+
+/// # Safety
+/// See [free]()
+pub unsafe fn realloc(ptr: *mut c_void, size: usize) -> Result<*mut c_void, Errno> {
+    unsafe {
+        free(ptr)?;
+    }
+    malloc(size)
+}
+
 /// Free a previously allocation section of memory
 ///
 /// # Safety
@@ -38,6 +56,16 @@ mod c_exports {
     #[no_mangle]
     extern "C" fn malloc(size: usize) -> *mut c_void {
         super::malloc(size).unwrap_or(ptr::null_mut())
+    }
+
+    #[no_mangle]
+    extern "C" fn calloc(nmemb: usize, size: usize) -> *mut c_void {
+        super::calloc(nmemb, size).unwrap_or(ptr::null_mut())
+    }
+
+    #[no_mangle]
+    unsafe extern "C" fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void {
+        unsafe { super::realloc(ptr, size).unwrap_or(ptr::null_mut()) }
     }
 
     #[no_mangle]
