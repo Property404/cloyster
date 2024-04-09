@@ -3,7 +3,7 @@ use crate::{
     malloc::{free, malloc},
 };
 use core::{
-    ffi::{c_char, c_int, c_void, CStr},
+    ffi::{c_char, c_int, c_long, c_void, CStr},
     fmt, mem, ptr,
 };
 mod printf;
@@ -215,6 +215,35 @@ pub unsafe extern "C" fn fread(
             0
         }
     }
+}
+
+/// Reposition a stream
+///
+/// # Safety
+///
+/// * `stream` must have been previously allocated with [fopen]
+#[no_mangle]
+#[must_use]
+pub unsafe extern "C" fn fseek(stream: *mut File, offset: c_long, whence: c_int) -> c_int {
+    assert!(!stream.is_null());
+
+    let fd = unsafe { (*stream).fd };
+
+    let Ok(offset) = offset.try_into() else {
+        unsafe {
+            (*stream).error = Errno::CloysterOverflow.as_positive();
+        }
+        return -1;
+    };
+    let val = crate::unistd::lseek(fd.0, offset, whence);
+
+    if val < 0 {
+        unsafe {
+            (*stream).error = -val;
+        }
+    }
+
+    val
 }
 
 /// Close a file
