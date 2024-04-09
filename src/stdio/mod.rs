@@ -103,7 +103,7 @@ pub unsafe extern "C" fn putc(c: c_int, stream: *mut File) -> c_int {
 ///
 /// # Safety
 ///
-/// Same as [read]
+/// Same as [fread]
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn getc(stream: *mut File) -> c_int {
@@ -135,11 +135,11 @@ pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
     printf_impl(Descriptor::stdout(), fmt, _args).unwrap_or_else(|err| err.as_negative())
 }
 
-/// Like [printf] but writes to a file
+/// Like [printf()] but writes to a file
 ///
 /// # Safety
 ///
-/// See [printf]
+/// See [printf()]
 ///
 /// Additionally, `stream` must not overlap with `fmt` or any argument
 #[no_mangle]
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> 
 /// # Safety
 ///
 /// * `file` must have been previously allocated with [fopen]
-/// * `ptr` must be a valid writable region of memory at least [size*nmemb] bytes long
+/// * `ptr` must be a valid writable region of memory at least `size*nmemb` bytes long
 /// *
 #[no_mangle]
 #[must_use]
