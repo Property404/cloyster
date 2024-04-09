@@ -13,6 +13,16 @@ Header files not included (just use glibc's)
 
 Only supports x86_64 on Linux
 
+Note that this requires a nightly compiler
+
+## Building the example program
+
+```
+cargo build
+gcc test.c -ffreestanding -nostdlib target/debug/libcloyster.a
+./a.out
+```
+
 ## License
 
 LGPLv2.1 OR LGPLv3 at your option
