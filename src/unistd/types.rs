@@ -1,6 +1,10 @@
 use bitflags::bitflags;
 use core::ffi::c_int;
 
+/// Type used for describing files
+#[allow(non_camel_case_types)]
+pub type off_t = isize;
+
 bitflags! {
     /// Flags for [mmap]
     #[derive(Copy, Clone, PartialEq, Eq)]

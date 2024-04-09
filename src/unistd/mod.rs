@@ -5,6 +5,7 @@ use core::{
 };
 
 pub mod types;
+use types::off_t;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -145,5 +146,17 @@ pub extern "C" fn close(fd: c_int) -> c_int {
             -1
         }
         Ok(_val) => 0,
+    }
+}
+
+/// Repositions the file offset of the file descriptor to the direction of `whence`
+#[no_mangle]
+pub extern "C" fn lseek(fd: c_int, offset: off_t, whence: c_int) -> c_int {
+    match os::sys_lseek(fd, offset, whence) {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
     }
 }

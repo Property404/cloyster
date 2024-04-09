@@ -1,4 +1,4 @@
-use crate::errno::Errno;
+use crate::{errno::Errno, unistd::types::off_t};
 use core::{
     ffi::{c_char, c_int, c_void},
     ptr,
@@ -72,6 +72,19 @@ pub(crate) unsafe fn sys_open(
             pathname as usize,
             flags.try_into()?,
             mode_t.try_into()?,
+        )
+    }
+    .map_err(|_| Errno::CloysterUnknown)
+    .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+}
+
+pub(crate) fn sys_lseek(fd: c_int, offset: off_t, whence: c_int) -> Result<c_int, Errno> {
+    unsafe {
+        syscalls::syscall3(
+            Sysno::lseek,
+            fd.try_into()?,
+            offset.try_into()?,
+            whence.try_into()?,
         )
     }
     .map_err(|_| Errno::CloysterUnknown)
