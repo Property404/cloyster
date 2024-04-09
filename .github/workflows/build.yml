@@ -26,7 +26,7 @@ jobs:
         run: rustup default nightly
 
       - name: Clippy
-        run: rustup add component clippy && \
+        run: rustup component add clippy && \
           cargo clippy -- -D warnings
 
       - name: Check docs
