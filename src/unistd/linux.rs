@@ -60,8 +60,8 @@ pub(crate) unsafe fn sys_brk(addr: *const c_void) -> Result<*mut c_void, Errno> 
 }
 
 pub(crate) unsafe fn sys_sbrk(offset: isize) -> Result<*mut c_void, Errno> {
-    let addr = sys_brk(ptr::null())?;
-    sys_brk(addr.wrapping_byte_offset(offset))
+    let addr = unsafe { sys_brk(ptr::null())? };
+    unsafe { sys_brk(addr.wrapping_byte_offset(offset)) }
 }
 
 pub(crate) unsafe fn sys_open(

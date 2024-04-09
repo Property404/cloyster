@@ -131,7 +131,7 @@ pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c
 #[no_mangle]
 #[deprecated = "Use memcmp instead"]
 pub unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
-    memcmp(src1, src2, n)
+    unsafe { memcmp(src1, src2, n) }
 }
 
 #[cfg(test)]

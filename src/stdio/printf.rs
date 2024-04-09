@@ -94,7 +94,7 @@ unsafe fn parse_placeholder<T: Cout>(
         changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
-        cout.put_cstr(CStr::from_ptr(args.next_ptr() as *const c_char).to_bytes())?;
+        cout.put_cstr(unsafe { CStr::from_ptr(args.next_ptr() as *const c_char) }.to_bytes())?;
         changed += 1;
     } else {
         todo!()

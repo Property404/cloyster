@@ -31,9 +31,9 @@ const EOF: c_int = -1;
 pub unsafe extern "C" fn puts(s: *const c_char) -> c_int {
     assert!(!s.is_null());
 
-    let length = crate::string::strlen(s);
+    let length = unsafe { crate::string::strlen(s) };
 
-    if crate::unistd::write(1, s as *const c_void, length) < 0 {
+    if unsafe { crate::unistd::write(1, s as *const c_void, length) } < 0 {
         return EOF;
     }
 
@@ -132,7 +132,7 @@ pub unsafe extern "C" fn getc(stream: *mut File) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
-    printf_impl(Descriptor::stdout(), fmt, _args).unwrap_or_else(|err| err.as_negative())
+    unsafe { printf_impl(Descriptor::stdout(), fmt, _args) }.unwrap_or_else(|err| err.as_negative())
 }
 
 /// Like [printf()] but writes to a file
@@ -145,7 +145,7 @@ pub unsafe extern "C" fn printf(fmt: *const c_char, _args: ...) -> c_int {
 #[no_mangle]
 #[must_use]
 pub unsafe extern "C" fn fprintf(stream: *mut File, fmt: *const c_char, _args: ...) -> c_int {
-    printf_impl(unsafe { (*stream).fd }, fmt, _args).unwrap_or_else(|err| err.as_negative())
+    unsafe { printf_impl((*stream).fd, fmt, _args) }.unwrap_or_else(|err| err.as_negative())
 }
 
 /// Open a file
@@ -221,7 +221,7 @@ pub unsafe extern "C" fn fread(
         return 0;
     };
 
-    let val = crate::unistd::read(fd.0, ptr, count);
+    let val = unsafe { crate::unistd::read(fd.0, ptr, count) };
 
     if let Ok(val) = val.try_into() {
         unsafe {
@@ -270,7 +270,9 @@ pub unsafe extern "C" fn fseek(stream: *mut File, offset: c_long, whence: c_int)
         }
     };
 
-    (*stream).offset += u64::try_from(val).expect("BUG: we already checked for negative");
+    unsafe {
+        (*stream).offset += u64::try_from(val).expect("BUG: we already checked for negative");
+    }
 
     0
 }
@@ -302,7 +304,7 @@ pub unsafe extern "C" fn ftell(file: *mut File) -> c_long {
 #[must_use]
 pub unsafe extern "C" fn fclose(file: *mut File) -> c_int {
     assert!(!file.is_null());
-    match free(file as *mut c_void) {
+    match unsafe { free(file as *mut c_void) } {
         Err(err) => err.as_negative(),
         Ok(()) => 0,
     }

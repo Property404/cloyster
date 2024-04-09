@@ -18,7 +18,7 @@ pub(crate) struct DefaultMemoryExtender;
 
 impl MemoryExtender for DefaultMemoryExtender {
     unsafe fn sbrk(&mut self, increment: usize) -> Result<*mut c_void, Errno> {
-        Ok(crate::unistd::sbrk(increment.try_into()?))
+        Ok(unsafe { crate::unistd::sbrk(increment.try_into()?) })
     }
 }
 
