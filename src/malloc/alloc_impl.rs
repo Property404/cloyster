@@ -11,14 +11,15 @@ const HDR_SIZE: usize = MIN_ALIGN;
 const PAGE_SIZE: usize = 4096;
 
 pub(crate) trait MemoryExtender {
-    unsafe fn sbrk(&mut self, increment: usize) -> Result<*mut c_void, Errno>;
+    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno>;
 }
 
 pub(crate) struct DefaultMemoryExtender;
 
 impl MemoryExtender for DefaultMemoryExtender {
-    unsafe fn sbrk(&mut self, increment: usize) -> Result<*mut c_void, Errno> {
-        Ok(unsafe { crate::unistd::sbrk(increment.try_into()?) })
+    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno> {
+        NonNull::new(unsafe { crate::unistd::sbrk(increment.try_into()?) })
+            .ok_or(Errno::CloysterAlloc)
     }
 }
 
@@ -44,16 +45,17 @@ unsafe impl<T: Send> Send for Allocator<T> {}
 impl<T: MemoryExtender> Allocator<T> {
     pub(crate) fn new(mut memory_extender: T) -> Result<Self, Errno> {
         assert!(HDR_SIZE >= mem::size_of::<Node>());
-        let head = unsafe { memory_extender.sbrk(PAGE_SIZE)? as *mut Node };
+        let mut head = unsafe { memory_extender.sbrk(PAGE_SIZE)?.cast() };
         unsafe {
-            assert!(!head.is_null());
-            (*head).free = true;
-            (*head).size = PAGE_SIZE - MIN_ALIGN;
-            (*head).next_node = None;
-            (*head).prev_node = None;
+            *head.as_mut() = Node {
+                free: true,
+                size: PAGE_SIZE - MIN_ALIGN,
+                next_node: None,
+                prev_node: None,
+            };
         }
         Ok(Self {
-            head: NonNull::new(head).ok_or(Errno::CloysterAlloc)?,
+            head,
             size: PAGE_SIZE,
             allocations: 0,
             memory_extender,
@@ -64,26 +66,25 @@ impl<T: MemoryExtender> Allocator<T> {
     fn claim_more(&mut self, required: usize) -> Result<NonNull<Node>, Errno> {
         let required = required.align_up(PAGE_SIZE);
 
-        unsafe {
-            let node = NonNull::new(self.memory_extender.sbrk(required)? as *mut Node)
-                .ok_or(Errno::CloysterAlloc)?;
-            assert_eq!(
-                node.as_ptr(),
-                self.head.as_ptr().wrapping_byte_add(self.size)
-            );
+        let mut node = unsafe { self.memory_extender.sbrk(required)? }.cast();
+        assert_eq!(
+            node.as_ptr(),
+            self.head.as_ptr().wrapping_byte_add(self.size)
+        );
 
-            *node.as_ptr() = Node {
+        unsafe {
+            *node.as_mut() = Node {
                 free: true,
                 size: required - HDR_SIZE,
                 next_node: None,
                 prev_node: None,
-            };
+            }
+        };
 
-            self.size += required;
-            self.total_claims = self.total_claims.saturating_add(1);
+        self.size += required;
+        self.total_claims = self.total_claims.saturating_add(1);
 
-            Ok(node)
-        }
+        Ok(node)
     }
 
     /// # Safety
@@ -176,14 +177,14 @@ mod tests {
     }
 
     impl MemoryExtender for MockExtender {
-        unsafe fn sbrk(&mut self, increment: usize) -> Result<*mut c_void, Errno> {
+        unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno> {
             let base = self.base;
             self.base += increment;
             if self.base > self.max {
                 panic!("Out of mock memory");
             }
 
-            Ok(base as *mut c_void)
+            Ok(NonNull::new(base as *mut c_void).unwrap())
         }
     }
 
