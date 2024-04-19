@@ -42,11 +42,10 @@ impl Descriptor {
 impl Cout for Descriptor {
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
-        if unsafe { crate::unistd::write(self.0, ptr::from_ref(s) as *const c_void, len) } >= 0 {
-            Ok(())
-        } else {
-            Err(Errno::CloysterSyscallFailed)
+        unsafe {
+            crate::unistd::write(self.0, ptr::from_ref(s) as *const c_void, len)?;
         }
+        Ok(())
     }
 }
 

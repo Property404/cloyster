@@ -33,7 +33,7 @@ pub unsafe extern "C" fn puts(s: *const c_char) -> c_int {
 
     let length = unsafe { crate::string::strlen(s) };
 
-    if unsafe { crate::unistd::write(1, s as *const c_void, length) } < 0 {
+    if unsafe { crate::unistd::write(1, s as *const c_void, length) }.is_err() {
         return EOF;
     }
 
@@ -62,7 +62,7 @@ pub extern "C" fn putchar(c: c_int) -> c_int {
         .try_into()
         .expect("Argument to `putchar` must be a valid C character");
 
-    if unsafe { crate::unistd::write(1, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
+    if unsafe { crate::unistd::write(1, ptr::from_ref(&c) as *const c_void, 1) }.is_err() {
         return EOF;
     }
 
@@ -92,7 +92,7 @@ pub unsafe extern "C" fn putc(c: c_int, stream: *mut File) -> c_int {
 
     let fd = unsafe { (*stream).fd };
 
-    if unsafe { crate::unistd::write(fd.0, ptr::from_ref(&c) as *const c_void, 1) } < 0 {
+    if unsafe { crate::unistd::write(fd.0, ptr::from_ref(&c) as *const c_void, 1) }.is_err() {
         return EOF;
     }
 
@@ -111,7 +111,7 @@ pub unsafe extern "C" fn getc(stream: *mut File) -> c_int {
 
     let mut c: c_char = 0;
 
-    if unsafe { crate::unistd::read(fd.0, ptr::from_mut(&mut c) as *mut c_void, 1) } < 0 {
+    if unsafe { crate::unistd::read(fd.0, ptr::from_mut(&mut c) as *mut c_void, 1) }.is_err() {
         return EOF;
     }
 
@@ -173,7 +173,10 @@ pub unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> 
         }
     }
 
-    let fd = unsafe { crate::unistd::open(pathname, open_flags, ModeFlags::default()) };
+    let Ok(fd) = (unsafe { crate::unistd::open(pathname, open_flags, ModeFlags::default()) })
+    else {
+        return ptr::null_mut();
+    };
 
     match malloc(mem::size_of::<File>()) {
         Ok(ptr) => {
@@ -223,21 +226,25 @@ pub unsafe extern "C" fn fread(
 
     let val = unsafe { crate::unistd::read(fd.0, ptr, count) };
 
-    if let Ok(val) = val.try_into() {
-        unsafe {
-            match u64::try_from(val) {
-                Ok(offset) => {
-                    (*file).offset += offset;
-                }
+    match val.and_then(|v| u64::try_from(v).map_err(Errno::from)) {
+        Ok(offset) => {
+            unsafe {
+                (*file).offset += offset;
+            }
+            match offset.try_into() {
+                Ok(val) => val,
                 Err(err) => {
-                    (*file).error = Errno::from(err).as_positive();
+                    unsafe {
+                        (*file).error = Errno::from(err).as_positive();
+                    }
+                    0
                 }
             }
-        };
-        val
-    } else {
-        unsafe {
-            (*file).error = -val;
+        }
+        Err(err) => {
+            unsafe {
+                (*file).error = err.as_positive();
+            }
             0
         }
     }
@@ -261,20 +268,23 @@ pub unsafe extern "C" fn fseek(stream: *mut File, offset: c_long, whence: c_int)
         }
         return -1;
     };
-    let val = crate::unistd::lseek(fd.0, offset, whence);
 
-    if val < 0 {
-        unsafe {
-            (*stream).error = -val;
-            return -1;
+    match crate::unistd::lseek(fd.0, offset, whence) {
+        Ok(val) => {
+            unsafe {
+                (*stream).offset +=
+                    u64::try_from(val).expect("BUG: we already checked for negative");
+            }
+
+            0
         }
-    };
-
-    unsafe {
-        (*stream).offset += u64::try_from(val).expect("BUG: we already checked for negative");
+        Err(err) => {
+            unsafe {
+                (*stream).error = err.as_negative();
+            }
+            -1
+        }
     }
-
-    0
 }
 
 /// Get current offset of file
@@ -304,8 +314,15 @@ pub unsafe extern "C" fn ftell(file: *mut File) -> c_long {
 #[must_use]
 pub unsafe extern "C" fn fclose(file: *mut File) -> c_int {
     assert!(!file.is_null());
-    match unsafe { free(file as *mut c_void) } {
-        Err(err) => err.as_negative(),
-        Ok(()) => 0,
+    let mut res = 0;
+
+    if let Err(err) = unsafe { crate::unistd::close((*file).fd.0) } {
+        res = err.as_negative();
     }
+
+    if let Err(err) = unsafe { free(file as *mut c_void) } {
+        res = err.as_negative();
+    }
+
+    res
 }
