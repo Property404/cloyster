@@ -1,4 +1,4 @@
-use crate::{stdlib::exit, types::*};
+use crate::{errno::Errno, stdlib::exit, types::*};
 use core::{
     arch::asm,
     ffi::{c_char, c_int, c_void},
@@ -34,7 +34,7 @@ unsafe extern "C" fn _cloyster_start(argc: c_int, argv: *const *const c_char) {
     crate::stdio::init();
 
     unsafe {
-        let fs = thread_local_init();
+        let fs = thread_local_init().unwrap();
         let rv = main(argc, argv);
         crate::unistd::munmap(fs.as_ptr(), STATIC_TLS_SIZE).unwrap();
         exit(rv);
@@ -46,7 +46,7 @@ static mut TDATA_END: () = ();
 
 // Set thread local pointer
 // This is NOT set up for multiple threads yet
-fn thread_local_init() -> NonNull<c_void> {
+fn thread_local_init() -> Result<NonNull<c_void>, Errno> {
     let map_addr = unsafe {
         crate::unistd::mmap(
             ptr::null(),
@@ -55,13 +55,11 @@ fn thread_local_init() -> NonNull<c_void> {
             MmapFlags::MAP_ANONYMOUS | MmapFlags::MAP_PRIVATE,
             0,
             0,
-        )
-        .unwrap()
+        )?
     };
     let addr = map_addr.as_ptr().wrapping_add(STATIC_TLS_SIZE);
     unsafe {
-        crate::unistd::arch_prctl(crate::types::ArchPrctlCode::ARCH_SET_FS, addr as *const u8)
-            .expect("Fork");
+        crate::unistd::arch_prctl(crate::types::ArchPrctlCode::ARCH_SET_FS, addr as *const u8)?;
     }
 
     unsafe {
@@ -74,5 +72,5 @@ fn thread_local_init() -> NonNull<c_void> {
         );
     }
 
-    map_addr
+    Ok(map_addr)
 }
