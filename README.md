@@ -15,11 +15,12 @@ Only supports x86_64 on Linux
 
 Note that this requires a nightly compiler
 
-## Building the example program
+## Statically linking Cloyster
 
 ```
 cargo build
-gcc test.c -ffreestanding -nostdlib target/debug/libcloyster.a
+...
+gcc my_program.c -ffreestanding -nostdlib target/debug/libcloyster.a
 ./a.out
 ```
 
