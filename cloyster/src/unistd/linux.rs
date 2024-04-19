@@ -42,7 +42,7 @@ pub unsafe fn mmap(
     fd: c_int,
     off_t: u64,
 ) -> Result<NonNull<c_void>, Errno> {
-    unsafe {
+    let val = unsafe {
         syscalls::syscall6(
             Sysno::mmap,
             addr as usize,
@@ -52,9 +52,9 @@ pub unsafe fn mmap(
             fd.try_into()?,
             off_t.try_into()?,
         )
-    }
-    .map_err(|_| Errno::CloysterUnknown)
-    .and_then(|val| NonNull::new(val as *mut c_void).ok_or(Errno::CloysterUnknown))
+    }?;
+
+    NonNull::new(val as *mut c_void).ok_or(Errno::CloysterUnknown)
 }
 
 /// Wrapper for `munmap` syscall
@@ -66,7 +66,7 @@ pub unsafe fn munmap(addr: *const c_void, length: usize) -> Result<c_int, Errno>
     assert!(!addr.is_null());
     assert!(length > 0);
     assert!(((addr as usize) & 0xFFF) == 0);
-    assert!(((length as usize) & 0xFFF) == 0);
+    assert!((length & 0xFFF) == 0);
     unsafe {
         syscalls::syscall2(Sysno::munmap, addr as usize, length)?;
     }
@@ -79,9 +79,7 @@ pub unsafe fn munmap(addr: *const c_void, length: usize) -> Result<c_int, Errno>
 ///
 /// No
 pub unsafe fn brk(addr: *const c_void) -> Result<*mut c_void, Errno> {
-    unsafe { syscalls::syscall1(Sysno::brk, addr as usize) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .map(|val| val as *mut c_void)
+    Ok(unsafe { syscalls::syscall1(Sysno::brk, addr as usize)? } as *mut c_void)
 }
 
 /// Wrapper for `brk` syscall
@@ -106,37 +104,33 @@ pub unsafe fn open(
     mode_t: ModeFlags,
 ) -> Result<c_int, Errno> {
     assert!(!pathname.is_null());
-    unsafe {
+    Ok(unsafe {
         syscalls::syscall3(
             Sysno::open,
             pathname as usize,
             flags.bits().try_into()?,
             mode_t.bits().try_into()?,
-        )
+        )?
     }
-    .map_err(|_| Errno::CloysterUnknown)
-    .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+    .try_into()?)
 }
 
 /// Repositions the file offset of the file descriptor to the direction of `whence`
 pub fn lseek(fd: c_int, offset: off_t, whence: c_int) -> Result<c_int, Errno> {
-    unsafe {
+    Ok(unsafe {
         syscalls::syscall3(
             Sysno::lseek,
             fd.try_into()?,
             offset.try_into()?,
             whence.try_into()?,
-        )
+        )?
     }
-    .map_err(|_| Errno::CloysterUnknown)
-    .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+    .try_into()?)
 }
 
 /// Close file descriptor
 pub fn close(fd: c_int) -> Result<c_int, Errno> {
-    unsafe { syscalls::syscall1(Sysno::close, fd.try_into()?) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+    Ok(unsafe { syscalls::syscall1(Sysno::close, fd.try_into()?)? }.try_into()?)
 }
 
 /// Get time
@@ -145,17 +139,14 @@ pub fn close(fd: c_int) -> Result<c_int, Errno> {
 ///
 /// `tloc` must be NULL or a valid time_t
 pub fn time() -> Result<time_t, Errno> {
-    unsafe { syscalls::syscall1(Sysno::time, 0) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .and_then(|val| time_t::try_from(val).map_err(Errno::from))
+    Ok(unsafe { syscalls::syscall1(Sysno::time, 0)? }.try_into()?)
 }
 
 /// # Safety
 ///
 /// See man page
 pub unsafe fn arch_prctl(code: ArchPrctlCode, addr: *const u8) -> Result<usize, Errno> {
-    unsafe { syscalls::syscall2(Sysno::arch_prctl, code as usize, addr as usize) }
-        .map_err(|_| Errno::CloysterUnknown)
+    Ok(unsafe { syscalls::syscall2(Sysno::arch_prctl, code as usize, addr as usize)? })
 }
 
 /// Exits the current process with status `status`
