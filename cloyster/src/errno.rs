@@ -1,4 +1,5 @@
 use core::{cell::RefCell, ffi::c_int, fmt, num, ptr};
+use enumn::N;
 use spin::Mutex;
 
 // The C standard only requires 3 error codes: EDOM, ERANGE, and EILSEQ
@@ -21,7 +22,7 @@ pub(crate) fn set_errno(val: Errno) {
     *errno.borrow_mut() = val.as_positive();
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, N)]
 #[repr(i16)]
 pub enum Errno {
     /// Operation not permitted
@@ -64,5 +65,15 @@ impl From<fmt::Error> for Errno {
 impl From<num::TryFromIntError> for Errno {
     fn from(_err: num::TryFromIntError) -> Self {
         Self::CloysterConversionError
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl From<syscalls::Errno> for Errno {
+    fn from(err: syscalls::Errno) -> Errno {
+        let Ok(err) = err.into_raw().try_into() else {
+            return Self::CloysterConversionError;
+        };
+        Self::n(err).unwrap_or(Errno::CloysterUnknown)
     }
 }

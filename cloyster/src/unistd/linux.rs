@@ -11,9 +11,10 @@ use syscalls::Sysno;
 /// `buf` must point to a valid readable region of memory that is valid for at least `count` bytes
 pub unsafe fn write(fd: c_int, buf: *const c_void, count: usize) -> Result<c_int, Errno> {
     assert!(!buf.is_null());
-    unsafe { syscalls::syscall3(Sysno::write, fd.try_into()?, buf as usize, count) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+    Ok(
+        unsafe { syscalls::syscall3(Sysno::write, fd.try_into()?, buf as usize, count)? }
+            .try_into()?,
+    )
 }
 
 /// Read up to `count` bytes to `buf` referred to by the file descriptor `fd`
@@ -22,9 +23,10 @@ pub unsafe fn write(fd: c_int, buf: *const c_void, count: usize) -> Result<c_int
 /// `buf` must point to a valid writable region of memory that is valid for at least `count` bytes
 pub unsafe fn read(fd: c_int, buf: *mut c_void, count: usize) -> Result<c_int, Errno> {
     assert!(!buf.is_null());
-    unsafe { syscalls::syscall3(Sysno::read, fd.try_into()?, buf as usize, count) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .and_then(|val| c_int::try_from(val).map_err(Errno::from))
+    Ok(
+        unsafe { syscalls::syscall3(Sysno::read, fd.try_into()?, buf as usize, count)? }
+            .try_into()?,
+    )
 }
 
 /// Wrapper for `mmap` syscall
@@ -62,9 +64,10 @@ pub unsafe fn mmap(
 /// See man page
 pub unsafe fn munmap(addr: *const c_void, length: usize) -> Result<c_int, Errno> {
     assert!(!addr.is_null());
-    unsafe { syscalls::syscall2(Sysno::mmap, addr as usize, length) }
-        .map_err(|_| Errno::CloysterUnknown)
-        .map(|_| 0)
+    unsafe {
+        syscalls::syscall2(Sysno::mmap, addr as usize, length)?;
+    }
+    Ok(0)
 }
 
 /// Wrapper for `brk` syscall
