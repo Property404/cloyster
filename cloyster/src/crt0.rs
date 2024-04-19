@@ -22,7 +22,7 @@ extern "C" fn _start() {
         pop	rdi
         mov rsi, rsp
         push rdi
-        call _cloyster_start
+        call __cloyster_start
             ",
             options(noreturn)
         );
@@ -30,7 +30,7 @@ extern "C" fn _start() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn _cloyster_start(argc: c_int, argv: *const *const c_char) {
+unsafe extern "C" fn __cloyster_start(argc: c_int, argv: *const *const c_char) {
     crate::stdio::init();
 
     unsafe {
