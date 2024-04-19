@@ -1,0 +1,22 @@
+[package]
+name = "cloyster"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[lints.rust]
+# Don't allow implicit unsafe operations in `unsafe fn`, so we don't do
+# something unsafe without being aware of it. I'm told this will be a hard
+# error in a future version of Rust
+unsafe_op_in_unsafe_fn = "deny"
+
+[dependencies]
+bitflags = "2.5.0"
+spin = { version = "0.9.8", default-features = false, features = ["spin_mutex"] }
+syscalls = { version = "0.6.18", default-features = false }
+talc = { version = "4.3.1", default-features = false }
+
+[dev-dependencies]
+rand = "0.8.5"
