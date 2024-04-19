@@ -10,7 +10,7 @@ main() {
 
     cargo build
 
-    for test_case in c_test_cases/*; do
+    for test_case in c_test_cases/*.c; do
         echo -n "Testing ${test_case}...";
 
         gcc ${CFLAGS} "${test_case}" -o "${aout}"
