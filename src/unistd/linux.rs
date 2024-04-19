@@ -1,6 +1,6 @@
 use crate::{
     errno::Errno,
-    types::{off_t, time_t},
+    types::{off_t, time_t, ArchPrctlCode},
 };
 use core::{
     ffi::{c_char, c_int, c_void},
@@ -104,6 +104,11 @@ pub(crate) fn sys_time() -> Result<time_t, Errno> {
     unsafe { syscalls::syscall1(Sysno::time, 0) }
         .map_err(|_| Errno::CloysterUnknown)
         .and_then(|val| time_t::try_from(val).map_err(Errno::from))
+}
+
+pub(crate) fn sys_arch_prctl(code: ArchPrctlCode, addr: *const u8) -> Result<usize, Errno> {
+    unsafe { syscalls::syscall2(Sysno::arch_prctl, code as usize, addr as usize) }
+        .map_err(|_| Errno::CloysterUnknown)
 }
 
 pub(crate) unsafe fn sys_exit(status: c_int) -> Result<c_int, Errno> {

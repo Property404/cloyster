@@ -8,7 +8,7 @@ pub mod types;
 use crate::types::{off_t, time_t};
 
 #[cfg(target_os = "linux")]
-mod linux;
+pub(crate) mod linux;
 #[cfg(target_os = "linux")]
 use linux as os;
 

@@ -1,3 +1,4 @@
+#![allow(non_camel_case_types)]
 use bitflags::bitflags;
 use core::ffi::c_int;
 
@@ -96,4 +97,13 @@ bitflags! {
         /// Read or write
         const O_RDWR = 0x2;
     }
+}
+
+/// Codes for linux's `arch_prctl()` syscall
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(i32)]
+#[cfg(target_os = "linux")]
+pub enum ArchPrctlCode {
+    ARCH_SET_FS = 0x1002,
+    ARCH_GET_FS = 0x1003,
 }
