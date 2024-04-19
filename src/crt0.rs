@@ -9,6 +9,7 @@ const STATIC_TLS_SIZE: usize = 0x2000;
 
 extern "C" {
     fn main(argc: c_int, argv: *const *const c_char) -> c_int;
+    static __tdata_start: c_void;
 }
 
 #[naked]
@@ -40,6 +41,9 @@ unsafe extern "C" fn _cloyster_start(argc: c_int, argv: *const *const c_char) {
     }
 }
 
+#[link_section = ".gnu.linkonce.td.tdata_end"]
+static mut TDATA_END: () = ();
+
 // Set thread local pointer
 // This is NOT set up for multiple threads yet
 fn thread_local_init() -> *mut c_void {
@@ -54,11 +58,22 @@ fn thread_local_init() -> *mut c_void {
         )
     };
     assert!(!map_addr.is_null());
-    let addr = map_addr.wrapping_add(STATIC_TLS_SIZE - 8);
+    let addr = map_addr.wrapping_add(STATIC_TLS_SIZE);
     crate::unistd::linux::sys_arch_prctl(
         crate::types::ArchPrctlCode::ARCH_SET_FS,
         addr as *const u8,
     )
     .expect("Fork");
+
+    unsafe {
+        let tdata_start = ptr::from_ref(&__tdata_start) as *const u8;
+        let tdata_len = ptr::addr_of_mut!(TDATA_END) as usize - tdata_start as usize;
+        ptr::copy_nonoverlapping(
+            tdata_start,
+            addr.wrapping_sub(tdata_len) as *mut u8,
+            tdata_len,
+        );
+    }
+
     map_addr
 }
