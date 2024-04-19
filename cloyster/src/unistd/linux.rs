@@ -64,8 +64,11 @@ pub unsafe fn mmap(
 /// See man page
 pub unsafe fn munmap(addr: *const c_void, length: usize) -> Result<c_int, Errno> {
     assert!(!addr.is_null());
+    assert!(length > 0);
+    assert!(((addr as usize) & 0xFFF) == 0);
+    assert!(((length as usize) & 0xFFF) == 0);
     unsafe {
-        syscalls::syscall2(Sysno::mmap, addr as usize, length)?;
+        syscalls::syscall2(Sysno::munmap, addr as usize, length)?;
     }
     Ok(0)
 }
