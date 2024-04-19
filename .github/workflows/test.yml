@@ -1,5 +1,5 @@
 ---
-name: Build
+name: Test
 
 # yamllint disable-line rule:truthy
 on: [push, pull_request]
@@ -8,7 +8,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_and_test:
 
     runs-on: ${{ matrix.os }}
 
@@ -32,5 +32,8 @@ jobs:
       - name: Check docs
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 
-      - name: Test
+      - name: Unit tests
         run: cargo test
+
+      - name: Integration tests
+        run: ./test.sh
