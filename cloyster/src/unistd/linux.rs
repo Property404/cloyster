@@ -149,6 +149,7 @@ pub fn time() -> Result<time_t, Errno> {
 /// # Safety
 ///
 /// See man page
+#[cfg(target_arch = "x86_64")]
 pub unsafe fn arch_prctl(code: ArchPrctlCode, addr: *const u8) -> Result<usize, Errno> {
     Ok(unsafe { syscalls::syscall2(Sysno::arch_prctl, code as usize, addr as usize)? })
 }
