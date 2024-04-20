@@ -31,6 +31,7 @@ extern "C" fn _start() {
 
 #[no_mangle]
 unsafe extern "C" fn __cloyster_start(argc: c_int, argv: *const *const c_char) {
+    crate::logging::Logger::init();
     crate::stdio::init();
 
     unsafe {
