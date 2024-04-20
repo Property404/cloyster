@@ -40,8 +40,6 @@
 # Text and Documentation
 !*.txt
 !*.md
-!reference/*.pdf
-!reference/*.dts
 !LICENSE*
 
 # Rust
@@ -50,8 +48,8 @@
 !Cargo.lock
 !config
 
-# Dummy rootfs
-!dummy.ext4
+# Misc
+!.clang-format
 
 # Exclude build directories
 target/
