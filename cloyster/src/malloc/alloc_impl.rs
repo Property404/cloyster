@@ -109,7 +109,9 @@ impl<T: MemoryExtender> Allocator<T> {
     }
 
     pub(crate) fn alloc(&mut self, requested_size: usize) -> Result<*mut c_void, Errno> {
-        assert!(requested_size > 0);
+        if requested_size == 0 {
+            panic!("Program attempted to allocate an object of 0 bytes");
+        }
         let requested_size = requested_size.align_up(MIN_ALIGN);
         assert!(requested_size.is_aligned_to(MIN_ALIGN));
         let mut prev_node: Option<NonNull<Node>> = None;
