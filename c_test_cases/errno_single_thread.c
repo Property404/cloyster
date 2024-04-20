@@ -1,6 +1,6 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
-#include <assert.h>
 
 int main() {
     printf("Errno: %d\n", errno);

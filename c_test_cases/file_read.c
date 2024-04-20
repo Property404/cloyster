@@ -1,8 +1,8 @@
 // 12345
 // This program opens and reads itself
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 int main() {
     printf("Opening %s\n", __FILE__);
