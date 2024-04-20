@@ -89,7 +89,10 @@ pub unsafe fn brk(addr: *const c_void) -> Result<*mut c_void, Errno> {
 /// No
 pub unsafe fn sbrk(offset: isize) -> Result<*mut c_void, Errno> {
     let addr = unsafe { brk(ptr::null())? };
-    unsafe { brk(addr.wrapping_byte_offset(offset)) }
+    unsafe {
+        brk(addr.wrapping_byte_offset(offset))?;
+    }
+    Ok(addr)
 }
 
 /// Wrapper for `open` syscall
