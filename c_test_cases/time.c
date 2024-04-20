@@ -11,4 +11,6 @@ int main() {
     assert(sizeof(t) > 4);
 
     assert(t > TIME_THIS_PROGRAM_WAS_WRITTEN);
+
+    return 0;
 }
