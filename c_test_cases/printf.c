@@ -13,5 +13,6 @@ int main() {
     printf("Percent: %%\n");
     printf("Bad UTF-8: \xc0\x80\n");
     printf("Bad UTF-8 as arg: %s\n", "\xc0\x80");
+    printf("Multiple args: %x%s%p\n", 42, "hello", NULL);
     return 0;
 }
