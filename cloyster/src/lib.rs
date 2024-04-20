@@ -2,7 +2,6 @@
 #![feature(thread_local)]
 #![feature(lang_items)]
 #![feature(c_variadic)]
-#![feature(naked_functions)]
 #![allow(internal_features)]
 
 #[cfg(not(test))]
@@ -12,11 +11,13 @@ mod assert;
 #[cfg(not(test))]
 mod crt0;
 pub mod errno;
+mod init;
 mod logging;
 pub mod malloc;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
+mod tls;
 pub mod types;
 pub mod unistd;
 
