@@ -8,6 +8,14 @@ use spin::Mutex;
 
 static ALLOCATOR: Mutex<OnceCell<Allocator<DefaultMemoryExtender>>> = Mutex::new(OnceCell::new());
 
+pub fn get_num_allocations() -> usize {
+    let allocator = ALLOCATOR.lock();
+    let Some(allocator) = allocator.get() else {
+        return 0;
+    };
+    allocator.allocations()
+}
+
 pub fn malloc(size: usize) -> Result<*mut c_void, Errno> {
     let mut allocator = ALLOCATOR.lock();
     allocator.get_or_init(|| Allocator::new(DefaultMemoryExtender).unwrap());

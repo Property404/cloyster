@@ -17,6 +17,8 @@ int main() {
     printf("Comparing\n");
     assert(memcmp(buffer, "// 12345", sizeof(buffer)) == 0);
 
+    assert(fclose(fp) == 0);
+
     printf("OK\n");
     return 0;
 }

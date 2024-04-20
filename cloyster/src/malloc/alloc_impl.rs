@@ -63,6 +63,10 @@ impl<T: MemoryExtender> Allocator<T> {
         })
     }
 
+    pub(crate) fn allocations(&self) -> usize {
+        self.allocations
+    }
+
     fn claim_more(&mut self, required: usize) -> Result<NonNull<Node>, Errno> {
         let required = required.align_up(PAGE_SIZE);
 
