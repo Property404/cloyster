@@ -10,5 +10,7 @@ int main() {
     printf("Binary: %B\n", 42);
     printf("Negative int: %d\n", -42);
     printf("Percent: %%\n");
+    printf("Bad UTF-8: \xc0\x80\n");
+    printf("Bad UTF-8 as arg: %s\n", "\xc0\x80");
     return 0;
 }
