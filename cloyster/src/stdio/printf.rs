@@ -96,9 +96,13 @@ unsafe fn parse_placeholder<T: Cout>(
         write!(cout, "{:b}", unsafe { args.next_int() })?;
         changed += 1;
     } else if fmt[0] == b'p' {
-        let val = unsafe { args.next_ptr() };
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "0x{:x}", val)?;
+        let val = unsafe { args.next_ptr() };
+        if val == 0 {
+            cout.put_cstr(b"(nil)")?;
+        } else {
+            write!(cout, "0x{:x}", val)?;
+        }
         changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up

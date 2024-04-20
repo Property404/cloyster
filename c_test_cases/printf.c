@@ -4,6 +4,7 @@ int main() {
     printf("Integer(d): %d\n", 42);
     printf("Integer(i): %i\n", 42);
     printf("Pointer: %p\n", (void*)42);
+    printf("Null: %p\n", NULL);
     printf("Hex: %x\n", 42);
     printf("Hex: %X\n", 42);
     printf("Binary: %b\n", 42);
