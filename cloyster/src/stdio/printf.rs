@@ -79,22 +79,29 @@ unsafe fn parse_placeholder<T: Cout>(
     let fmt = &fmt[1..];
     let mut changed = 1;
 
-    if fmt[0] == b'd' {
+    if fmt[0] == b'd' || fmt[0] == b'i' {
         // Safe IFF previous safety guarantees hold up
         write!(cout, "{}", unsafe { args.next_int() })?;
         changed += 1;
     } else if fmt[0] == b'x' {
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "0x{:08x}", unsafe { args.next_int() })?;
+        write!(cout, "{:x}", unsafe { args.next_int() })?;
+        changed += 1;
+    } else if fmt[0] == b'X' {
+        // Safe IFF previous safety guarantees hold up
+        write!(cout, "{:X}", unsafe { args.next_int() })?;
         changed += 1;
     } else if fmt[0] == b'p' {
         let val = unsafe { args.next_ptr() };
         // Safe IFF previous safety guarantees hold up
-        write!(cout, "0x{:08x}", val)?;
+        write!(cout, "0x{:x}", val)?;
         changed += 1;
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
         cout.put_cstr(unsafe { CStr::from_ptr(args.next_ptr() as *const c_char) }.to_bytes())?;
+        changed += 1;
+    } else if fmt[0] == b'%' {
+        cout.put_cstr(b"%")?;
         changed += 1;
     } else {
         todo!()
