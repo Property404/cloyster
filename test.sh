@@ -2,7 +2,7 @@
 # shellcheck disable=SC2086
 set -e
 
-declare -r CFLAGS="-Wall -Wextra -std=c2x -pedantic -Werror"
+declare -r CFLAGS="-Wall -Wextra -std=c2x -pedantic -Werror -static"
 
 main() {
     local -r temp_dir="$(mktemp -d)"
@@ -22,8 +22,8 @@ main() {
 
         if [[ "${GLIBC_OUTPUT}" != "${CLOYSTER_OUTPUT}" ]]; then
             echo "Differing output" >&2
-            echo "glibc: ${GLIBC_OUTPUT}" >&2
-            echo "cloyster: ${CLOYSTER_OUTPUT}" >&2
+            echo -e "glibc:\n${GLIBC_OUTPUT}" >&2
+            echo -e "cloyster:\n${CLOYSTER_OUTPUT}" >&2
             return 1
         fi
         echo "OK"
