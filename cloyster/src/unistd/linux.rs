@@ -143,7 +143,10 @@ pub fn close(fd: c_int) -> Result<c_int, Errno> {
 ///
 /// `tloc` must be NULL or a valid time_t
 pub fn time() -> Result<time_t, Errno> {
-    Ok(unsafe { syscalls::syscall1(Sysno::time, 0)? }.try_into()?)
+    let tv = TimeVal::default();
+    let tv_ptr = ptr::from_ref(&tv) as usize;
+    unsafe { syscalls::syscall2(Sysno::gettimeofday, tv_ptr, 0)? };
+    Ok(tv.seconds)
 }
 
 /// # Safety

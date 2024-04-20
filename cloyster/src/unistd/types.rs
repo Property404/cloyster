@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+use crate::types::time_t;
 use bitflags::bitflags;
 use core::ffi::c_int;
 
@@ -8,9 +9,12 @@ use core::ffi::c_int;
 #[cfg(target_os = "linux")]
 pub const AT_FDCWD: c_int = -100;
 
-/// Type used for describing files
+/// Type used for file offsets
 #[allow(non_camel_case_types)]
 pub type off_t = isize;
+
+/// Represents the SUB-SECOND time in microseconds
+pub type suseconds_t = i32;
 
 bitflags! {
     /// Flags for [mmap]
@@ -112,4 +116,13 @@ bitflags! {
 pub enum ArchPrctlCode {
     ARCH_SET_FS = 0x1002,
     ARCH_GET_FS = 0x1003,
+}
+
+/// Time in seconds and milliseconds
+/// Corresponds to the POSIX `timeval` struct
+#[derive(Debug, Default, Copy, Clone)]
+#[repr(C)]
+pub struct TimeVal {
+    pub seconds: time_t,
+    pub useconds: suseconds_t,
 }
