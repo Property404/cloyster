@@ -8,7 +8,7 @@ int main() {
     printf("Opening %s\n", __FILE__);
     FILE* fp = fopen(__FILE__, "rb");
     printf("checking\n");
-    assert(fp != nullptr);
+    assert(fp != NULL);
 
     char buffer[9] = {0};
     printf("Reading\n");
