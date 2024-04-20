@@ -108,8 +108,9 @@ pub unsafe fn open(
 ) -> Result<c_int, Errno> {
     assert!(!pathname.is_null());
     Ok(unsafe {
-        syscalls::syscall3(
-            Sysno::open,
+        syscalls::syscall4(
+            Sysno::openat,
+            AT_FDCWD as usize,
             pathname as usize,
             flags.bits().try_into()?,
             mode_t.bits().try_into()?,

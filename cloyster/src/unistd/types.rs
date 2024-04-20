@@ -2,6 +2,12 @@
 use bitflags::bitflags;
 use core::ffi::c_int;
 
+/// Special "file descriptor" value used in openat(2) and linkat(2)
+/// Makes the pathname interpreted relative to the current working directory, as opposed to a
+/// directory specified by a file descriptor
+#[cfg(target_os = "linux")]
+pub const AT_FDCWD: c_int = -100;
+
 /// Type used for describing files
 #[allow(non_camel_case_types)]
 pub type off_t = isize;
