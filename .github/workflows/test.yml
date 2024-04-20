@@ -19,6 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Display system information
+        run: cat /etc/os-release && uname -a
+
+      - name: Display compiler version
+        run: gcc --version
+
       - name: Lint
         run: cargo fmt --check
 
