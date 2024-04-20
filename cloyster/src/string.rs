@@ -134,6 +134,20 @@ pub unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_i
     unsafe { memcmp(src1, src2, n) }
 }
 
+#[no_mangle]
+pub extern "C" fn toupper(c: c_int) -> c_int {
+    u8::try_from(c)
+        .map(|c| c.to_ascii_uppercase() as c_int)
+        .unwrap_or(c)
+}
+
+#[no_mangle]
+pub extern "C" fn tolower(c: c_int) -> c_int {
+    u8::try_from(c)
+        .map(|c| c.to_ascii_lowercase() as c_int)
+        .unwrap_or(c)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
