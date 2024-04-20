@@ -13,6 +13,9 @@ unsafe extern "C" fn __assert_fail(
     line: c_uint,
     function: *const c_char,
 ) {
+    assert!(!assertion.is_null());
+    assert!(!file.is_null());
+    assert!(!function.is_null());
     let assertion = unsafe { CStr::from_ptr(assertion) }.to_str().unwrap();
     let file = unsafe { CStr::from_ptr(file) }.to_str().unwrap();
     let function = unsafe { CStr::from_ptr(function) }.to_str().unwrap();
