@@ -38,6 +38,9 @@ jobs:
       - name: Check docs
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 
+      - name: Install riscv toolchain
+        run: rustup target add riscv64gc-unknown-linux-gnu
+
       - name: Build on riscv
         run: cargo build --target riscv64gc-unknown-linux-gnu
 
