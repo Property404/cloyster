@@ -3,7 +3,11 @@
 #include <stdint.h>
 
 typedef int64_t time_t;
-struct timespec;
+
+struct timespec {
+    time_t tv_sec;
+    uint64_t tv_nsec;
+};
 
 time_t time(time_t* tloc);
 
