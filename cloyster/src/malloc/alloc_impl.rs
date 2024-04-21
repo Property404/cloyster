@@ -203,7 +203,7 @@ mod tests {
             let mut allocs = Vec::new();
 
             for i in 1..100 {
-                let area = allocator.alloc(rng.gen::<usize>() % 256 + 1).unwrap() as *mut u32;
+                let area = allocator.alloc(rng.r#gen::<usize>() % 256 + 1).unwrap() as *mut u32;
                 allocs.push(area);
                 assert_eq!(allocator.allocations, i);
             }
