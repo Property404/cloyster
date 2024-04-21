@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 
 int main() {
@@ -14,5 +15,9 @@ int main() {
     printf("Bad UTF-8: \xc0\x80\n");
     printf("Bad UTF-8 as arg: %s\n", "\xc0\x80");
     printf("Multiple args: %x%s%p\n", 42, "hello", NULL);
+
+    // Check return value
+    assert(printf("Hello %s", "World\n") == 12);
+    assert(printf("%s", "") == 0);
     return 0;
 }
