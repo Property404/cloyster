@@ -1,7 +1,7 @@
 use crate::{errno::set_errno, types::*};
 use core::{
     ffi::{c_char, c_int, c_void},
-    ptr,
+    ptr::{self, NonNull},
 };
 
 #[no_mangle]
@@ -112,6 +112,18 @@ extern "C" fn time(time: *mut time_t) -> time_t {
         unimplemented!("Cloyster only currently accepts the argument to time() to be NULL");
     }
     match crate::unistd::time() {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
+}
+
+#[no_mangle]
+extern "C" fn nanosleep(req: *const TimeSpec, rem: Option<NonNull<TimeSpec>>) -> c_int {
+    assert!(!req.is_null());
+    match crate::unistd::nanosleep(req, rem) {
         Err(errno) => {
             set_errno(errno);
             -1

@@ -2,7 +2,7 @@
 # shellcheck disable=SC2086
 set -e
 
-declare -r CFLAGS="-Wall -Wextra -std=c2x -pedantic -Werror -static"
+declare -r CFLAGS="-Wall -Wextra -std=gnu2x -pedantic -Werror -static"
 
 main() {
     local -r temp_dir="$(mktemp -d)"

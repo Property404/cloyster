@@ -138,15 +138,22 @@ pub fn close(fd: c_int) -> Result<c_int, Errno> {
 }
 
 /// Get time
-///
-/// # Safety
-///
-/// `tloc` must be NULL or a valid time_t
 pub fn time() -> Result<time_t, Errno> {
     let tv = TimeVal::default();
     let tv_ptr = ptr::from_ref(&tv) as usize;
     unsafe { syscalls::syscall2(Sysno::gettimeofday, tv_ptr, 0)? };
     Ok(tv.seconds)
+}
+
+/// Sleep for a period of time
+///
+/// # Safety
+///
+/// `req` must be non-NULL and point to a valid readable `timespec`
+/// `rem` must be either NULL or point to a valid writable `timespec`
+pub fn nanosleep(req: *const TimeSpec, rem: Option<NonNull<TimeSpec>>) -> Result<c_int, Errno> {
+    let rem = rem.map(|v| v.as_ptr() as usize).unwrap_or(0);
+    Ok(unsafe { syscalls::syscall2(Sysno::nanosleep, req as usize, rem)? }.try_into()?)
 }
 
 /// # Safety
