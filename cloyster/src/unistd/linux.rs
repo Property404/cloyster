@@ -62,8 +62,8 @@ pub unsafe fn mmap(
 /// # Safety
 ///
 /// See man page
-pub unsafe fn munmap(addr: *const c_void, length: usize) -> Result<c_int, Errno> {
-    assert!(!addr.is_null());
+pub unsafe fn munmap(addr: NonNull<c_void>, length: usize) -> Result<c_int, Errno> {
+    let addr = addr.as_ptr();
     assert!(length > 0);
     assert!(((addr as usize) & 0xFFF) == 0);
     assert!((length & 0xFFF) == 0);

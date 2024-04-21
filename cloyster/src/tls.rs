@@ -61,7 +61,7 @@ pub(crate) unsafe fn thread_local_init() -> Result<NonNull<c_void>, Errno> {
 
 pub(crate) unsafe fn thread_local_uninit(ptr: NonNull<c_void>) -> Result<(), Errno> {
     unsafe {
-        crate::unistd::munmap(ptr.as_ptr(), STATIC_TLS_SIZE)?;
+        crate::unistd::munmap(ptr, STATIC_TLS_SIZE)?;
     }
     Ok(())
 }

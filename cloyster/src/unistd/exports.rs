@@ -52,7 +52,8 @@ unsafe extern "C" fn mmap(
 }
 
 #[no_mangle]
-unsafe extern "C" fn munmap(addr: *const c_void, length: usize) -> c_int {
+unsafe extern "C" fn munmap(addr: Option<NonNull<c_void>>, length: usize) -> c_int {
+    let addr = addr.expect("Cannot unmap null address");
     match unsafe { crate::unistd::munmap(addr, length) } {
         Err(errno) => {
             set_errno(errno);
