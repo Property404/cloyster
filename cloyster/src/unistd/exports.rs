@@ -122,6 +122,18 @@ extern "C" fn time(time: *mut time_t) -> time_t {
 }
 
 #[no_mangle]
+extern "C" fn clock_gettime(id: clockid_t, tp: Option<NonNull<TimeSpec>>) -> c_int {
+    let tp = tp.expect("Unexpected null arg to `clock_gettime()`");
+    match crate::unistd::clock_gettime(id, tp) {
+        Err(errno) => {
+            set_errno(errno);
+            -1
+        }
+        Ok(val) => val,
+    }
+}
+
+#[no_mangle]
 extern "C" fn nanosleep(req: *const TimeSpec, rem: Option<NonNull<TimeSpec>>) -> c_int {
     assert!(!req.is_null());
     match crate::unistd::nanosleep(req, rem) {

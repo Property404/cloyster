@@ -10,11 +10,13 @@ use core::ffi::c_int;
 pub const AT_FDCWD: c_int = -100;
 
 /// Type used for file offsets
-#[allow(non_camel_case_types)]
 pub type off_t = isize;
 
 /// Represents the SUB-SECOND time in microseconds
 pub type suseconds_t = i32;
+
+/// Clock ID for clock ad timer functions
+pub type clockid_t = i32;
 
 bitflags! {
     /// Flags for [mmap]

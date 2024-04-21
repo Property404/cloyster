@@ -145,6 +145,11 @@ pub fn time() -> Result<time_t, Errno> {
     Ok(tv.seconds)
 }
 
+/// Get time
+pub fn clock_gettime(id: clockid_t, tp: NonNull<TimeSpec>) -> Result<c_int, Errno> {
+    Ok(unsafe { syscalls::syscall2(Sysno::clock_gettime, id as usize, tp.as_ptr() as usize)? }.try_into()?)
+}
+
 /// Sleep for a period of time
 ///
 /// # Safety
