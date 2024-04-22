@@ -11,7 +11,7 @@ impl log::Log for Logger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             let _ = writeln!(
-                crate::stdio::Descriptor::stderr(),
+                shellder::stdio::Descriptor::stderr(),
                 "{} - {}",
                 record.level(),
                 record.args()

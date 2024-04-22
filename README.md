@@ -13,6 +13,11 @@ Only supports Linux(x86_64 and RISC-V)
 
 Note that this requires a nightly compiler
 
+## Crates
+
+* Cloyster - Cloyster C library
+* Shellder - Rust implementation of C functions without exports
+
 ## Statically linking Cloyster
 
 ```

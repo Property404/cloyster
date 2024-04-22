@@ -2,8 +2,7 @@ use crate::malloc;
 use core::ffi::c_int;
 
 /// Causes normal process termination with status `status`
-#[no_mangle]
-pub extern "C" fn exit(status: c_int) -> ! {
+pub fn exit(status: c_int) -> ! {
     if malloc::get_num_allocations() != 0 {
         panic!("Memory leak detected on exit!");
     }
@@ -11,7 +10,6 @@ pub extern "C" fn exit(status: c_int) -> ! {
 }
 
 /// Causes abnormal process termination
-#[no_mangle]
-pub extern "C" fn abort() -> ! {
+pub fn abort() -> ! {
     crate::unistd::exit(1)
 }

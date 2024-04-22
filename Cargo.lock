@@ -19,12 +19,11 @@ name = "cloyster"
 version = "0.0.0"
 dependencies = [
  "bitflags",
- "enumn",
  "log",
  "rand",
+ "shellder",
  "spin",
  "syscalls",
- "talc",
 ]
 
 [[package]]
@@ -116,6 +115,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "shellder"
+version = "0.0.0"
+dependencies = [
+ "bitflags",
+ "enumn",
+ "log",
+ "rand",
+ "spin",
+ "syscalls",
+]
+
+[[package]]
 name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -137,12 +148,6 @@ name = "syscalls"
 version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43d0e35dc7d73976a53c7e6d7d177ef804a0c0ee774ec77bcc520c2216fd7cbe"
-
-[[package]]
-name = "talc"
-version = "4.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99fd7baf7741cf3749967c73529ec946c09adcfb44a5256fa92f37623fcbda9f"
 
 [[package]]
 name = "unicode-ident"

@@ -1,7 +1,6 @@
 use super::usize_ext::UsizeExt;
 use crate::errno::Errno;
 use core::{
-    ffi::c_void,
     mem,
     ptr::{self, NonNull},
 };
@@ -11,13 +10,13 @@ const HDR_SIZE: usize = MIN_ALIGN;
 const PAGE_SIZE: usize = 4096;
 
 pub(crate) trait MemoryExtender {
-    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno>;
+    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<u8>, Errno>;
 }
 
 pub(crate) struct DefaultMemoryExtender;
 
 impl MemoryExtender for DefaultMemoryExtender {
-    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno> {
+    unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<u8>, Errno> {
         NonNull::new(unsafe { crate::unistd::sbrk(increment.try_into()?)? })
             .ok_or(Errno::CloysterAlloc)
     }
@@ -93,9 +92,8 @@ impl<T: MemoryExtender> Allocator<T> {
 
     /// # Safety
     /// Ptr must be a valid, previosly allocated region of memory
-    pub(crate) unsafe fn free(&mut self, ptr: *mut c_void) -> Result<(), Errno> {
-        assert!(!ptr.is_null());
-
+    pub(crate) unsafe fn free(&mut self, ptr: NonNull<u8>) -> Result<(), Errno> {
+        let ptr = ptr.as_ptr();
         let node = unsafe { ((ptr.wrapping_sub(HDR_SIZE)) as *mut Node).as_mut() }
             .ok_or(Errno::CloysterAlloc)?;
         assert!(!node.free);
@@ -108,7 +106,7 @@ impl<T: MemoryExtender> Allocator<T> {
         Ok(())
     }
 
-    pub(crate) fn alloc(&mut self, requested_size: usize) -> Result<*mut c_void, Errno> {
+    pub(crate) fn alloc(&mut self, requested_size: usize) -> Result<NonNull<u8>, Errno> {
         if requested_size == 0 {
             panic!("Program attempted to allocate an object of 0 bytes");
         }
@@ -149,7 +147,8 @@ impl<T: MemoryExtender> Allocator<T> {
                     noderef.size = requested_size;
                 }
                 self.allocations += 1;
-                return Ok(ptr::from_mut(noderef).wrapping_byte_add(HDR_SIZE) as *mut c_void);
+                return NonNull::new(ptr::from_mut(noderef).wrapping_byte_add(HDR_SIZE) as *mut u8)
+                    .ok_or(Errno::CloysterAlloc);
             }
 
             prev_node = node;
@@ -183,14 +182,14 @@ mod tests {
     }
 
     impl MemoryExtender for MockExtender {
-        unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<c_void>, Errno> {
+        unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<u8>, Errno> {
             let base = self.base;
             self.base += increment;
             if self.base > self.max {
                 panic!("Out of mock memory");
             }
 
-            Ok(NonNull::new(base as *mut c_void).unwrap())
+            Ok(NonNull::new(base as *mut u8).unwrap())
         }
     }
 
@@ -203,14 +202,14 @@ mod tests {
             let mut allocs = Vec::new();
 
             for i in 1..100 {
-                let area = allocator.alloc(rng.r#gen::<usize>() % 256 + 1).unwrap() as *mut u32;
+                let area = allocator.alloc(rng.r#gen::<usize>() % 256 + 1).unwrap();
                 allocs.push(area);
                 assert_eq!(allocator.allocations, i);
             }
 
             for alloc in allocs {
                 unsafe {
-                    allocator.free(alloc as *mut c_void).unwrap();
+                    allocator.free(alloc).unwrap();
                 }
             }
         }
@@ -224,14 +223,14 @@ mod tests {
         let mut allocator = Allocator::new(MockExtender::new(100000)).unwrap();
 
         for i in 1..400 {
-            let area = allocator.alloc(31).unwrap() as *mut u32;
+            let area = allocator.alloc(31).unwrap();
             allocs.push(area);
             assert_eq!(allocator.allocations, i);
         }
 
         for alloc in allocs {
             unsafe {
-                allocator.free(alloc as *mut c_void).unwrap();
+                allocator.free(alloc).unwrap();
             }
         }
 
@@ -253,12 +252,15 @@ mod tests {
     fn basic() {
         let mut allocator = Allocator::new(MockExtender::new(10000)).unwrap();
         for _ in 0..1000000 {
-            let area = allocator.alloc(800).unwrap() as *mut u32;
+            let area = allocator.alloc(800).unwrap();
             assert_eq!(allocator.allocations, 1);
             unsafe {
-                *area = 0xdeadbeef;
-                assert_eq!(*area, 0xdeadbeef);
-                allocator.free(area as *mut c_void).unwrap();
+                {
+                    let area = area.as_ptr() as *mut u32;
+                    *area = 0xdeadbeef;
+                    assert_eq!(*area, 0xdeadbeef);
+                }
+                allocator.free(area).unwrap();
             }
         }
         assert_eq!(allocator.allocations, 0);

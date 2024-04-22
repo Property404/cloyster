@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "cloyster" ]
+members = [ "cloyster" , "shellder"]
 
 [profile.dev]
 panic = "abort"

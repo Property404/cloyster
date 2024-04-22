@@ -10,25 +10,25 @@ use core::{fmt::Write, panic::PanicInfo};
 mod assert;
 #[cfg(not(test))]
 mod crt0;
-pub mod errno;
+mod errno;
+#[cfg(not(test))]
+mod exports;
+mod globals;
 mod init;
 mod logging;
-pub mod malloc;
-pub mod stdio;
-pub mod stdlib;
-pub mod string;
 mod tls;
-pub mod types;
-pub mod unistd;
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    let err = writeln!(stdio::Descriptor::stderr(), "CLOYSTER: {info}").is_err();
+    let err = writeln!(shellder::stdio::Descriptor::stderr(), "CLOYSTER: {info}").is_err();
     if err {
-        let _ = writeln!(stdio::Descriptor::stderr(), "(write error while panicking)");
+        let _ = writeln!(
+            shellder::stdio::Descriptor::stderr(),
+            "(write error while panicking)"
+        );
     }
-    stdlib::abort();
+    shellder::exit::abort();
 }
 
 #[cfg(not(test))]
