@@ -120,11 +120,10 @@ unsafe fn parse_placeholder<T: Cout>(
 
 pub(crate) unsafe fn printf_impl(
     cout: impl Cout,
-    fmt: *const c_char,
+    fmt: &CStr,
     mut args: impl VaListLike,
 ) -> Result<c_int, Errno> {
-    assert!(!fmt.is_null());
-    let fmt = unsafe { CStr::from_ptr(fmt) }.to_bytes();
+    let fmt = fmt.to_bytes();
     let len = fmt.len();
 
     let mut cout = CountingCout::from(cout);
@@ -204,7 +203,7 @@ mod tests {
 
     fn check(res: &str, fmt: &CStr, va: impl Into<MockVaList>) {
         let mut string = String::new();
-        let length = unsafe { printf_impl(&mut string, fmt.as_ptr(), va.into()).unwrap() };
+        let length = unsafe { printf_impl(&mut string, fmt, va.into()).unwrap() };
         assert_eq!(string, res);
         assert_eq!(length, res.len().try_into().unwrap());
     }

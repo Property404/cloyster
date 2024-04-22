@@ -1,4 +1,7 @@
-use core::ffi::{c_char, c_int};
+use core::{
+    ffi::{c_int, CStr},
+    ptr::NonNull,
+};
 
 /// Calculate the length of a null-terminated string
 ///
@@ -9,21 +12,8 @@ use core::ffi::{c_char, c_int};
 /// # Returns
 ///
 /// The length of the string
-///
-/// # Safety
-///
-/// `s` must be a pointer to a null-terminated string
-#[no_mangle]
-pub unsafe extern "C" fn strlen(mut s: *const c_char) -> usize {
-    assert!(!s.is_null());
-
-    let mut count = 0;
-    while unsafe { *s != (b'\0' as c_char) } {
-        s = unsafe { s.add(1) };
-        count += 1;
-    }
-
-    count
+pub fn strlen(s: &CStr) -> usize {
+    s.to_bytes().len()
 }
 
 /// Copy `src` into `dst` for `n` bytes
@@ -35,8 +25,7 @@ pub unsafe extern "C" fn strlen(mut s: *const c_char) -> usize {
 ///
 /// * `dst` and `src` must be pointer to memory regions with at least `n` valid bits
 /// * `dst` and `src` must not overlap
-#[no_mangle]
-pub unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+pub unsafe fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     // XXX: Running unit tests, I get instances of memcpy with arguments 0x1, 0x1, 0x00,
     // which is crazy. Need to figure out why this happens. This prevents panicking
     if n == 0 {
@@ -69,8 +58,7 @@ pub unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut 
 //
 // Currently this cals memcpy which will just panic if the buffers overlap
 /*
-#[no_mangle]
-pub unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+pub unsafe fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
     assert!(!src.is_null());
     assert!(!dst.is_null());
     unimplemented!()
@@ -84,16 +72,12 @@ pub unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut
 /// # Safety
 /// `dst` must be a pointer to a region of memory that is valid for `n` bytes
 ///
-/// # Bugs
-/// Currently panics on unexpected `c` input. This is not in accordance with the C standard
-///
 /// # Returns
 /// The value of `dst`
-#[no_mangle]
-pub unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) -> *mut u8 {
+pub unsafe fn memset(dst: NonNull<u8>, c: c_int, n: usize) -> NonNull<u8> {
     unsafe {
         for i in 0..n {
-            *(dst.add(i)) = u8::try_from(c).unwrap();
+            *(dst.as_ptr().add(i)) = c as u8;
         }
     }
     dst
@@ -110,8 +94,9 @@ pub unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) -> *mut u8 {
 /// # Safety
 ///
 /// `src1` and `src2` must point to regions of memory that are valid for `n` bytes
-#[no_mangle]
-pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
+pub unsafe fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
+    assert!(!src1.is_null());
+    assert!(!src2.is_null());
     unsafe {
         for i in 0..n {
             let res = c_int::from(*(src1.add(i))) - c_int::from(*(src2.add(i)));
@@ -123,26 +108,13 @@ pub unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c
     0
 }
 
-/// Identical to [memcmp], use that instead
-///
-/// # Safety
-///
-/// See [memcmp]
-#[no_mangle]
-#[deprecated = "Use memcmp instead"]
-pub unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
-    unsafe { memcmp(src1, src2, n) }
-}
-
-#[no_mangle]
-pub extern "C" fn toupper(c: c_int) -> c_int {
+pub fn toupper(c: c_int) -> c_int {
     u8::try_from(c)
         .map(|c| c.to_ascii_uppercase() as c_int)
         .unwrap_or(c)
 }
 
-#[no_mangle]
-pub extern "C" fn tolower(c: c_int) -> c_int {
+pub fn tolower(c: c_int) -> c_int {
     u8::try_from(c)
         .map(|c| c.to_ascii_lowercase() as c_int)
         .unwrap_or(c)
@@ -151,12 +123,42 @@ pub extern "C" fn tolower(c: c_int) -> c_int {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::ptr;
+
+    #[test]
+    fn upper_lower() {
+        assert_eq!(tolower(b'a' as c_int), b'a' as c_int);
+        assert_eq!(tolower(b'A' as c_int), b'a' as c_int);
+        assert_eq!(tolower(b'0' as c_int), b'0' as c_int);
+        assert_eq!(tolower(0x7F), 0x7F);
+        assert_eq!(tolower(0xFF), 0xFF);
+
+        assert_eq!(toupper(b'a' as c_int), b'A' as c_int);
+        assert_eq!(toupper(b'A' as c_int), b'A' as c_int);
+        assert_eq!(toupper(b'0' as c_int), b'0' as c_int);
+        assert_eq!(toupper(0x7F), 0x7F);
+        assert_eq!(toupper(0xFF), 0xFF);
+    }
 
     #[test]
     fn string_length() {
+        assert_eq!(strlen(c"dagan"), 5);
+        assert_eq!(strlen(c""), 0);
+    }
+
+    #[test]
+    fn copy() {
+        let a = b"dagan";
+        let mut b = [0; 5];
         unsafe {
-            assert_eq!(strlen(c"dagan".as_ptr()), 5);
-            assert_eq!(strlen(c"".as_ptr()), 0);
+            memcpy(
+                ptr::from_mut(&mut b) as *mut u8,
+                ptr::from_ref(a) as *const u8,
+                5,
+            );
+        }
+        for (index, byte) in b.iter().enumerate() {
+            assert_eq!(*byte, a[index]);
         }
     }
 }

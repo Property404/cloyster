@@ -1,6 +1,6 @@
 use crate::{errno::Errno, types::*};
 use core::{
-    ffi::{c_char, c_int, c_void},
+    ffi::{c_int, c_void, CStr},
     ptr::{self, NonNull},
 };
 use syscalls::Sysno;
@@ -78,8 +78,8 @@ pub unsafe fn munmap(addr: NonNull<c_void>, length: usize) -> Result<c_int, Errn
 /// # Safety
 ///
 /// No
-pub unsafe fn brk(addr: *const c_void) -> Result<*mut c_void, Errno> {
-    Ok(unsafe { syscalls::syscall1(Sysno::brk, addr as usize)? } as *mut c_void)
+pub unsafe fn brk(addr: *const u8) -> Result<*mut u8, Errno> {
+    Ok(unsafe { syscalls::syscall1(Sysno::brk, addr as usize)? } as *mut u8)
 }
 
 /// Wrapper for `brk` syscall
@@ -87,7 +87,7 @@ pub unsafe fn brk(addr: *const c_void) -> Result<*mut c_void, Errno> {
 /// # Safety
 ///
 /// No
-pub unsafe fn sbrk(offset: isize) -> Result<*mut c_void, Errno> {
+pub unsafe fn sbrk(offset: isize) -> Result<*mut u8, Errno> {
     let addr = unsafe { brk(ptr::null())? };
     unsafe {
         brk(addr.wrapping_byte_offset(offset))?;
@@ -101,17 +101,12 @@ pub unsafe fn sbrk(offset: isize) -> Result<*mut c_void, Errno> {
 ///
 /// `pathname` must point to a valid null-terminated string
 /// `mode` MUST be specified correctly if `O_CREAT` or `O_TEMPFILE` is specified in `flags`
-pub unsafe fn open(
-    pathname: *const c_char,
-    flags: OpenFlags,
-    mode_t: ModeFlags,
-) -> Result<c_int, Errno> {
-    assert!(!pathname.is_null());
+pub unsafe fn open(pathname: &CStr, flags: OpenFlags, mode_t: ModeFlags) -> Result<c_int, Errno> {
     Ok(unsafe {
         syscalls::syscall4(
             Sysno::openat,
             AT_FDCWD as usize,
-            pathname as usize,
+            pathname.as_ptr() as usize,
             flags.bits().try_into()?,
             mode_t.bits().try_into()?,
         )?
@@ -147,7 +142,10 @@ pub fn time() -> Result<time_t, Errno> {
 
 /// Get time
 pub fn clock_gettime(id: clockid_t, tp: NonNull<TimeSpec>) -> Result<c_int, Errno> {
-    Ok(unsafe { syscalls::syscall2(Sysno::clock_gettime, id as usize, tp.as_ptr() as usize)? }.try_into()?)
+    Ok(
+        unsafe { syscalls::syscall2(Sysno::clock_gettime, id as usize, tp.as_ptr() as usize)? }
+            .try_into()?,
+    )
 }
 
 /// Sleep for a period of time

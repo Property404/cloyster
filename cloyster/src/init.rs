@@ -1,5 +1,6 @@
-use crate::{stdlib::exit, tls};
+use crate::tls;
 use core::ffi::{c_char, c_int};
+use shellder::exit;
 
 extern "C" {
     fn main(argc: c_int, argv: *const *const c_char) -> c_int;
@@ -8,7 +9,7 @@ extern "C" {
 #[no_mangle]
 unsafe extern "C" fn __cloyster_start(argc: c_int, argv: *const *const c_char) {
     crate::logging::Logger::init();
-    crate::stdio::init();
+    crate::globals::init();
 
     unsafe {
         let fs = tls::thread_local_init().unwrap();

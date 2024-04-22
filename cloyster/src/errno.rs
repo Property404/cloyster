@@ -1,5 +1,5 @@
-use core::{cell::RefCell, ffi::c_int, fmt, num, ptr};
-use enumn::N;
+use core::{cell::RefCell, ffi::c_int, ptr};
+use shellder::Errno;
 use spin::Mutex;
 
 // The C standard only requires 3 error codes: EDOM, ERANGE, and EILSEQ
@@ -20,60 +20,4 @@ unsafe extern "C" fn __errno_location() -> *const c_int {
 pub(crate) fn set_errno(val: Errno) {
     let errno = ERRNO.lock();
     *errno.borrow_mut() = val.as_positive();
-}
-
-#[derive(Copy, Clone, Debug, N)]
-#[repr(i16)]
-pub enum Errno {
-    /// Operation not permitted
-    EPERM = 1,
-    /// Invalid arguments
-    EINVAL = 22,
-
-    /// Unknown error
-    CloysterUnknown = 0x1000,
-    /// Fmt error
-    CloysterFmtError,
-    /// Failed integer conversion
-    CloysterConversionError,
-    /// Integer Overflow
-    CloysterOverflow,
-    /// Generic syscall failure. More information can usually be found in `errno`
-    CloysterSyscallFailed,
-    /// Allocation failure
-    CloysterAlloc,
-}
-
-impl Errno {
-    /// Return as positive value, to set errno
-    pub fn as_positive(self) -> c_int {
-        self as c_int
-    }
-
-    /// Return as negative value, to return from functions
-    pub fn as_negative(self) -> c_int {
-        -(self as c_int)
-    }
-}
-
-impl From<fmt::Error> for Errno {
-    fn from(_err: fmt::Error) -> Self {
-        Self::CloysterFmtError
-    }
-}
-
-impl From<num::TryFromIntError> for Errno {
-    fn from(_err: num::TryFromIntError) -> Self {
-        Self::CloysterConversionError
-    }
-}
-
-#[cfg(target_os = "linux")]
-impl From<syscalls::Errno> for Errno {
-    fn from(err: syscalls::Errno) -> Errno {
-        let Ok(err) = err.into_raw().try_into() else {
-            return Self::CloysterConversionError;
-        };
-        Self::n(err).unwrap_or(Errno::CloysterUnknown)
-    }
 }

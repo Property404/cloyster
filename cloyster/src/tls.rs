@@ -1,9 +1,10 @@
 //! TLS(Thread Local Storage setup
-use crate::{errno::Errno, types::*};
 use core::{
     ffi::c_void,
     ptr::{self, NonNull},
 };
+use shellder::types::*;
+use shellder::Errno;
 
 extern "C" {
     static __tdata_start: c_void;
@@ -17,7 +18,10 @@ static mut TDATA_END: () = ();
 unsafe fn set_thread_pointer(addr: *const c_void) -> Result<(), Errno> {
     #[cfg(target_arch = "x86_64")]
     unsafe {
-        crate::unistd::arch_prctl(crate::types::ArchPrctlCode::ARCH_SET_FS, addr as *const u8)?;
+        shellder::unistd::arch_prctl(
+            shellder::types::ArchPrctlCode::ARCH_SET_FS,
+            addr as *const u8,
+        )?;
         Ok(())
     }
     #[cfg(target_arch = "riscv64")]
@@ -31,7 +35,7 @@ unsafe fn set_thread_pointer(addr: *const c_void) -> Result<(), Errno> {
 // This is NOT set up for multiple threads yet
 pub(crate) unsafe fn thread_local_init() -> Result<NonNull<c_void>, Errno> {
     let map_addr = unsafe {
-        crate::unistd::mmap(
+        shellder::unistd::mmap(
             ptr::null(),
             STATIC_TLS_SIZE,
             MmapProtFlags::PROT_READ | MmapProtFlags::PROT_WRITE,
@@ -61,7 +65,7 @@ pub(crate) unsafe fn thread_local_init() -> Result<NonNull<c_void>, Errno> {
 
 pub(crate) unsafe fn thread_local_uninit(ptr: NonNull<c_void>) -> Result<(), Errno> {
     unsafe {
-        crate::unistd::munmap(ptr, STATIC_TLS_SIZE)?;
+        shellder::unistd::munmap(ptr, STATIC_TLS_SIZE)?;
     }
     Ok(())
 }
