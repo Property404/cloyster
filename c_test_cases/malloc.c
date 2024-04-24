@@ -20,6 +20,9 @@ int main() {
     }
     free(x);
 
+    // Test freeing NULL
+    free(NULL);
+
     // Test realloc
     // This is currently not working because realloc was not implemented
     // correctly

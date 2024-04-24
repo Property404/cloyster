@@ -19,16 +19,20 @@ extern "C" fn calloc(nmemb: usize, size: usize) -> *mut c_void {
 
 #[no_mangle]
 unsafe extern "C" fn realloc(ptr: Option<NonNull<c_void>>, size: usize) -> *mut c_void {
-    let ptr = ptr.expect("Unexpected NULL arg to `realloc()`").cast();
     unsafe {
-        shellder::malloc::realloc(ptr, size)
-            .map(|v| v.cast().as_ptr())
-            .unwrap_or(ptr::null_mut())
+        if let Some(ptr) = ptr {
+            shellder::malloc::realloc(ptr.cast(), size)
+                .map(|v| v.cast().as_ptr())
+                .unwrap_or(ptr::null_mut())
+        } else {
+            malloc(size)
+        }
     }
 }
 
 #[no_mangle]
 extern "C" fn free(ptr: Option<NonNull<c_void>>) {
-    let ptr = ptr.expect("Unexpected NULL arg to `free()`").cast();
-    unsafe { shellder::malloc::free(ptr).expect("Failed to free") }
+    if let Some(ptr) = ptr {
+        unsafe { shellder::malloc::free(ptr.cast()).expect("Failed to free") }
+    }
 }
