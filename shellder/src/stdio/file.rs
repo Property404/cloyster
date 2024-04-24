@@ -1,7 +1,7 @@
 use super::printf::Cout;
 use crate::errno::Errno;
 use core::{
-    ffi::{c_int, c_void},
+    ffi::{c_char, c_int, c_void},
     fmt, ptr,
 };
 
@@ -24,6 +24,11 @@ impl Descriptor {
 }
 
 impl Cout for Descriptor {
+    fn put_char(&mut self, s: c_char) -> Result<(), Errno> {
+        crate::stdio::putchar(s as c_int)?;
+        Ok(())
+    }
+
     fn put_cstr(&mut self, s: &[u8]) -> Result<(), Errno> {
         let len = s.len();
         unsafe {

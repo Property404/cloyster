@@ -8,6 +8,7 @@ int main() {
     printf("Null: %p\n", NULL);
     printf("Hex: %x\n", 42);
     printf("Hex: %X\n", 42);
+    printf("Char: %c\n", 'B');
     printf("Binary: %b\n", 42);
     printf("Binary: %B\n", 42);
     printf("Negative int: %d\n", -42);

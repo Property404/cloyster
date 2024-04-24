@@ -8,6 +8,7 @@ use core::{
 pub(crate) trait VaListLike {
     // Annoyingly, VaArgSafe is a sealed trait, so we need a method for each type
     unsafe fn next_int(&mut self) -> c_int;
+    unsafe fn next_char(&mut self) -> c_char;
     unsafe fn next_ptr(&mut self) -> usize;
 }
 
@@ -16,12 +17,20 @@ impl<'a> VaListLike for VaListImpl<'a> {
         unsafe { self.arg::<c_int>() }
     }
 
+    unsafe fn next_char(&mut self) -> c_char {
+        unsafe { self.arg::<c_char>() }
+    }
+
     unsafe fn next_ptr(&mut self) -> usize {
         unsafe { self.arg::<usize>() }
     }
 }
 
 impl<V: VaListLike> VaListLike for &mut V {
+    unsafe fn next_char(&mut self) -> c_char {
+        unsafe { (*self).next_char() }
+    }
+
     unsafe fn next_int(&mut self) -> c_int {
         unsafe { (*self).next_int() }
     }
@@ -32,10 +41,20 @@ impl<V: VaListLike> VaListLike for &mut V {
 }
 
 pub(crate) trait Cout {
-    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno>;
+    fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
+        for c in cstr {
+            self.put_char(*c as c_char)?;
+        }
+        Ok(())
+    }
+    fn put_char(&mut self, cstr: c_char) -> Result<(), Errno>;
 }
 
 impl<T: Cout> Cout for &mut T {
+    fn put_char(&mut self, c: c_char) -> Result<(), Errno> {
+        (*self).put_char(c)
+    }
+
     fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
         (*self).put_cstr(cstr)
     }
@@ -57,6 +76,12 @@ impl<T: Cout> fmt::Write for CountingCout<T> {
 }
 
 impl<T: Cout> Cout for CountingCout<T> {
+    fn put_char(&mut self, c: c_char) -> Result<(), Errno> {
+        self.inner.put_char(c)?;
+        self.count += 1;
+        Ok(())
+    }
+
     fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
         self.inner.put_cstr(cstr)?;
         self.count += cstr.len();
@@ -107,6 +132,9 @@ unsafe fn parse_placeholder<T: Cout>(
     } else if fmt[0] == b's' {
         // Safe IFF previous safety guarantees hold up
         cout.put_cstr(unsafe { CStr::from_ptr(args.next_ptr() as *const c_char) }.to_bytes())?;
+        changed += 1;
+    } else if fmt[0] == b'c' {
+        cout.put_char(unsafe { args.next_char() })?;
         changed += 1;
     } else if fmt[0] == b'%' {
         cout.put_cstr(b"%")?;
@@ -187,16 +215,18 @@ mod tests {
             self.0.pop_front().unwrap().try_into().unwrap()
         }
 
+        unsafe fn next_char(&mut self) -> c_char {
+            self.0.pop_front().unwrap().try_into().unwrap()
+        }
+
         unsafe fn next_ptr(&mut self) -> usize {
             self.0.pop_front().unwrap()
         }
     }
 
     impl Cout for String {
-        fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
-            for c in cstr {
-                self.push((*c).into());
-            }
+        fn put_char(&mut self, c: c_char) -> Result<(), Errno> {
+            self.push(char::from_u32(c as u32).unwrap());
             Ok(())
         }
     }
@@ -214,6 +244,7 @@ mod tests {
         check("45", c"45", MockVaList::new());
         check("45", c"%d", MockVaList::new().with(45));
         check("[45]", c"[%d]", MockVaList::new().with(45));
+        check("[A]", c"[%c]", MockVaList::new().with('A' as usize));
         check("[3141]", c"[%d%d]", MockVaList::new().with(31).with(41));
         check(
             "[hello]",
