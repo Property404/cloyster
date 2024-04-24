@@ -190,6 +190,35 @@ pub unsafe fn fread(
     Ok(val.try_into()?)
 }
 
+/// Write to file from `ptr`
+///
+/// # Safety
+///
+/// * `file` must have been previously allocated with [fopen]
+/// * `ptr` must be a valid redable region of memory at least `size*nmemb` bytes long
+/// *
+pub unsafe fn fwrite(
+    ptr: *const u8,
+    size: usize,
+    nmemb: usize,
+    file: NonNull<File>,
+) -> Result<usize, Errno> {
+    let file = file.as_ptr();
+
+    let fd = unsafe { (*file).fd };
+
+    let count = size.checked_mul(nmemb).ok_or(Errno::CloysterOverflow)?;
+
+    let val = unsafe { crate::unistd::write(fd.0, ptr as *mut c_void, count)? };
+    let val = u64::try_from(val)?;
+
+    unsafe {
+        (*file).offset += val;
+    }
+
+    Ok(val.try_into()?)
+}
+
 /// Reposition a stream
 ///
 /// # Safety

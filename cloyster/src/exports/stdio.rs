@@ -114,6 +114,28 @@ unsafe extern "C" fn fread(
 
 #[no_mangle]
 #[must_use]
+unsafe extern "C" fn fwrite(
+    ptr: *const c_void,
+    size: usize,
+    nmemb: usize,
+    file: Option<NonNull<File>>,
+) -> usize {
+    let file = file.expect("Unexpected null arg to `fread()`");
+    assert!(!ptr.is_null());
+
+    unsafe {
+        match shellder::stdio::fwrite(ptr as *const u8, size, nmemb, file) {
+            Ok(val) => val,
+            Err(err) => {
+                (*file.as_ptr()).error = err.as_positive();
+                0
+            }
+        }
+    }
+}
+
+#[no_mangle]
+#[must_use]
 unsafe extern "C" fn fseek(stream: Option<NonNull<File>>, offset: c_long, whence: c_int) -> c_int {
     let stream = stream.expect("Unexpected null arg to `fread()`");
 
