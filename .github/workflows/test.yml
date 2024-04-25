@@ -24,7 +24,7 @@ jobs:
         run: ./install-dependencies.sh
 
       - name: Set cargo path
-        run: echo "~/.cargo/bin/" >> ${GITHUB_PATH}
+        run: source ~/.cargo/env
 
       - name: Display system information
         run: cat /etc/os-release && uname -a
