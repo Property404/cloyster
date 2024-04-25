@@ -11,6 +11,7 @@ jobs:
   build_and_test:
 
     runs-on: ${{ matrix.os }}
+    container: fedora
 
     strategy:
       matrix:
