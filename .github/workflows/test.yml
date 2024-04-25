@@ -33,26 +33,26 @@ jobs:
         run: gcc --version
 
       - name: Lint
-        run: ~/.cargo/cargo fmt --check
+        run: ~/.cargo/bin/cargo fmt --check
 
       - name: Switch to nightly
         run: rustup default nightly
 
       - name: Clippy
         run: rustup component add clippy &&
-          ~/.cargo/cargo clippy -- -D warnings
+          ~/.cargo/bin/cargo clippy -- -D warnings
 
       - name: Check docs
-        run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+        run: RUSTDOCFLAGS="-D warnings" ~/.cargo/bin/cargo doc --no-deps
 
       - name: Install riscv toolchain
         run: rustup target add riscv64gc-unknown-linux-gnu
 
       - name: Build on riscv
-        run: ~/.cargo/cargo build --target riscv64gc-unknown-linux-gnu
+        run: ~/.cargo/bin/cargo build --target riscv64gc-unknown-linux-gnu
 
       - name: Unit tests
-        run: ~/.cargo/cargo test
+        run: ~/.cargo/bin/cargo test
 
       - name: Integration tests
         run: ./test.sh
