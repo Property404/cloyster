@@ -41,7 +41,7 @@ Help:
 
     # Install RustUp if needed
     if ! command -v rustup > /dev/null; then
-        curl --proto '=https' --tlsv1.3 -sSf https://sh.rustup.rs | sh
+        curl --proto '=https' --tlsv1.3 -sSf https://sh.rustup.rs | sh -- -y
         export PATH="${PATH}:${HOME}/.cargo/bin"
     fi
 
