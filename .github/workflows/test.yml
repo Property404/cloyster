@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: type dnf && sudo dnf install gcc || true
+        run: type dnf && sudo dnf install -y gcc || true
 
       - name: Display system information
         run: cat /etc/os-release && uname -a
