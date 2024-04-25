@@ -12,7 +12,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     container: fedora
-    env:
 
     strategy:
       matrix:
