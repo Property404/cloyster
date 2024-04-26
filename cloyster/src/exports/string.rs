@@ -1,6 +1,7 @@
 use core::{
-    ffi::{c_char, c_int},
-    ptr::NonNull,
+    cmp::Ordering,
+    ffi::{c_char, c_int, CStr},
+    ptr::{self, NonNull},
 };
 
 #[no_mangle]
@@ -34,6 +35,37 @@ unsafe extern "C" fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int
 #[deprecated = "Use memcmp instead"]
 unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     unsafe { shellder::string::memcmp(src1, src2, n) }
+}
+
+#[no_mangle]
+unsafe extern "C" fn strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
+    let s1 = unsafe { CStr::from_ptr(s1) };
+    let s2 = unsafe { CStr::from_ptr(s2) };
+    match shellder::string::strcmp(s1, s2) {
+        Ordering::Less => -1,
+        Ordering::Equal => 0,
+        Ordering::Greater => 1,
+    }
+}
+
+#[no_mangle]
+unsafe extern "C" fn strncmp(s1: *const c_char, s2: *const c_char, n: usize) -> c_int {
+    let s1 = unsafe { CStr::from_ptr(s1) };
+    let s2 = unsafe { CStr::from_ptr(s2) };
+    match shellder::string::strncmp(s1, s2, n) {
+        Ordering::Less => -1,
+        Ordering::Equal => 0,
+        Ordering::Greater => 1,
+    }
+}
+
+#[no_mangle]
+unsafe extern "C" fn strstr(haystack: *const c_char, needle: *const c_char) -> *mut c_char {
+    let haystack = unsafe { CStr::from_ptr(haystack) };
+    let needle = unsafe { CStr::from_ptr(needle) };
+    shellder::string::strstr(haystack, needle)
+        .map(|v| v.as_ptr() as *mut c_char)
+        .unwrap_or(ptr::null_mut())
 }
 
 #[no_mangle]

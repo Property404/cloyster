@@ -1,20 +1,6 @@
-use core::{
-    ffi::{c_int, CStr},
-    ptr::NonNull,
-};
+//! The 'mem*' functions
 
-/// Calculate the length of a null-terminated string
-///
-/// # C Signature
-///
-/// `size_t strlen(const char *s);`
-///
-/// # Returns
-///
-/// The length of the string
-pub fn strlen(s: &CStr) -> usize {
-    s.to_bytes().len()
-}
+use core::{ffi::c_int, ptr::NonNull};
 
 /// Copy `src` into `dst` for `n` bytes
 ///
@@ -108,43 +94,10 @@ pub unsafe fn memcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     0
 }
 
-pub fn toupper(c: c_int) -> c_int {
-    u8::try_from(c)
-        .map(|c| c.to_ascii_uppercase() as c_int)
-        .unwrap_or(c)
-}
-
-pub fn tolower(c: c_int) -> c_int {
-    u8::try_from(c)
-        .map(|c| c.to_ascii_lowercase() as c_int)
-        .unwrap_or(c)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use core::ptr;
-
-    #[test]
-    fn upper_lower() {
-        assert_eq!(tolower(b'a' as c_int), b'a' as c_int);
-        assert_eq!(tolower(b'A' as c_int), b'a' as c_int);
-        assert_eq!(tolower(b'0' as c_int), b'0' as c_int);
-        assert_eq!(tolower(0x7F), 0x7F);
-        assert_eq!(tolower(0xFF), 0xFF);
-
-        assert_eq!(toupper(b'a' as c_int), b'A' as c_int);
-        assert_eq!(toupper(b'A' as c_int), b'A' as c_int);
-        assert_eq!(toupper(b'0' as c_int), b'0' as c_int);
-        assert_eq!(toupper(0x7F), 0x7F);
-        assert_eq!(toupper(0xFF), 0xFF);
-    }
-
-    #[test]
-    fn string_length() {
-        assert_eq!(strlen(c"dagan"), 5);
-        assert_eq!(strlen(c""), 0);
-    }
 
     #[test]
     fn copy() {
