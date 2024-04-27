@@ -23,7 +23,7 @@ pub fn strlen(s: &CStr) -> usize {
 }
 
 #[must_use]
-fn strncmp_inner(s1: &CStr, s2: &CStr, n: Option<usize>) -> Ordering {
+fn strncmp_inner(s1: &CStr, s2: &CStr, n: Option<usize>, ignore_case: bool) -> Ordering {
     let s1 = s1.to_bytes();
     let s2 = s2.to_bytes();
     for (count, (c1, c2)) in s1.iter().zip(s2.iter()).enumerate() {
@@ -33,8 +33,14 @@ fn strncmp_inner(s1: &CStr, s2: &CStr, n: Option<usize>) -> Ordering {
             }
         }
 
-        if c1 != c2 {
-            return c1.cmp(c2);
+        let ordering = if ignore_case {
+            c1.to_ascii_lowercase().cmp(&c2.to_ascii_lowercase())
+        } else {
+            c1.cmp(c2)
+        };
+
+        if ordering != Ordering::Equal {
+            return ordering;
         }
     }
 
@@ -47,13 +53,25 @@ fn strncmp_inner(s1: &CStr, s2: &CStr, n: Option<usize>) -> Ordering {
 /// < s2, a positive number if s1 > s2, otherwise 0
 #[must_use]
 pub fn strcmp(s1: &CStr, s2: &CStr) -> Ordering {
-    strncmp_inner(s1, s2, None)
+    strncmp_inner(s1, s2, None, false)
 }
 
 /// Like [strcmp()] but compares at most `n` bytes
 #[must_use]
 pub fn strncmp(s1: &CStr, s2: &CStr, n: usize) -> Ordering {
-    strncmp_inner(s1, s2, Some(n))
+    strncmp_inner(s1, s2, Some(n), false)
+}
+
+/// Like [strcmp] but ignores case
+#[must_use]
+pub fn strcasecmp(s1: &CStr, s2: &CStr) -> Ordering {
+    strncmp_inner(s1, s2, None, true)
+}
+
+/// Like [strncmp] but ignores case
+#[must_use]
+pub fn strncasecmp(s1: &CStr, s2: &CStr, n: usize) -> Ordering {
+    strncmp_inner(s1, s2, Some(n), true)
 }
 
 /// Locate a substring `needle` in `haystack`

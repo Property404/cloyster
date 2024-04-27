@@ -19,12 +19,18 @@ int main() {
     printf("%d\n", norm(strcmp("", "b")));
     printf("%d\n", norm(strcmp("", "")));
     printf("%d\n", norm(strcmp("apple", "appl")));
+    printf("%d\n", norm(strcasecmp("apple", "apple")));
+    printf("%d\n", norm(strcasecmp("apple", "aPPLE")));
     for (int i = 0; i < 10; i++) {
         printf("%d\n", norm(strncmp("a", "b", i)));
+        printf("%d\n", norm(strncmp("a", "B", i)));
         printf("%d\n", norm(strncmp("", "", i)));
         printf("%d\n", norm(strncmp("a", "", i)));
         printf("%d\n", norm(strncmp("", "b", i)));
         printf("%d\n", norm(strncmp("apple", "apple", i)));
+        printf("%d\n", norm(strncmp("apple", "aPPLe", i)));
         printf("%d\n", norm(strncmp("apple", "orange", i)));
+        printf("%d\n", norm(strncasecmp("apple", "apple", i)));
+        printf("%d\n", norm(strncasecmp("apple", "aPPLe", i)));
     }
 }

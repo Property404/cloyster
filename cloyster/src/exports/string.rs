@@ -37,11 +37,8 @@ unsafe extern "C" fn bcmp(src1: *const u8, src2: *const u8, n: usize) -> c_int {
     unsafe { shellder::string::memcmp(src1, src2, n) }
 }
 
-#[no_mangle]
-unsafe extern "C" fn strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
-    let s1 = unsafe { CStr::from_ptr(s1) };
-    let s2 = unsafe { CStr::from_ptr(s2) };
-    match shellder::string::strcmp(s1, s2) {
+fn ord_to_int(ordering: Ordering) -> c_int {
+    match ordering {
         Ordering::Less => -1,
         Ordering::Equal => 0,
         Ordering::Greater => 1,
@@ -49,14 +46,31 @@ unsafe extern "C" fn strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
 }
 
 #[no_mangle]
+unsafe extern "C" fn strcmp(s1: *const c_char, s2: *const c_char) -> c_int {
+    let s1 = unsafe { CStr::from_ptr(s1) };
+    let s2 = unsafe { CStr::from_ptr(s2) };
+    ord_to_int(shellder::string::strcmp(s1, s2))
+}
+
+#[no_mangle]
 unsafe extern "C" fn strncmp(s1: *const c_char, s2: *const c_char, n: usize) -> c_int {
     let s1 = unsafe { CStr::from_ptr(s1) };
     let s2 = unsafe { CStr::from_ptr(s2) };
-    match shellder::string::strncmp(s1, s2, n) {
-        Ordering::Less => -1,
-        Ordering::Equal => 0,
-        Ordering::Greater => 1,
-    }
+    ord_to_int(shellder::string::strncmp(s1, s2, n))
+}
+
+#[no_mangle]
+unsafe extern "C" fn strcasecmp(s1: *const c_char, s2: *const c_char) -> c_int {
+    let s1 = unsafe { CStr::from_ptr(s1) };
+    let s2 = unsafe { CStr::from_ptr(s2) };
+    ord_to_int(shellder::string::strcasecmp(s1, s2))
+}
+
+#[no_mangle]
+unsafe extern "C" fn strncasecmp(s1: *const c_char, s2: *const c_char, n: usize) -> c_int {
+    let s1 = unsafe { CStr::from_ptr(s1) };
+    let s2 = unsafe { CStr::from_ptr(s2) };
+    ord_to_int(shellder::string::strncasecmp(s1, s2, n))
 }
 
 #[no_mangle]
