@@ -4,6 +4,7 @@
 mod errno;
 pub mod exit;
 pub mod malloc;
+pub mod math;
 pub mod stdio;
 pub mod string;
 pub mod types;
