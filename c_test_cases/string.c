@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Normalize the values of strcmp/strncmp
@@ -14,13 +15,16 @@ static int norm(int x) {
     }
 }
 
-int main() {
+void strcmp_test() {
     printf("%d\n", norm(strcmp("a", "b")));
     printf("%d\n", norm(strcmp("", "b")));
     printf("%d\n", norm(strcmp("", "")));
     printf("%d\n", norm(strcmp("apple", "appl")));
     printf("%d\n", norm(strcasecmp("apple", "apple")));
     printf("%d\n", norm(strcasecmp("apple", "aPPLE")));
+}
+
+void strncmp_test() {
     for (int i = 0; i < 10; i++) {
         printf("%d\n", norm(strncmp("a", "b", i)));
         printf("%d\n", norm(strncmp("a", "B", i)));
@@ -33,10 +37,30 @@ int main() {
         printf("%d\n", norm(strncasecmp("apple", "apple", i)));
         printf("%d\n", norm(strncasecmp("apple", "aPPLe", i)));
     }
+}
 
+void substr_test() {
     printf("%s\n", strstr("apple", "le"));
     printf("%p\n", strstr("apple", "te"));
     printf("%s\n", strchr("apple", 'p'));
     printf("%s\n", strrchr("apple", 'p'));
     printf("%p\n", strrchr("apple", 'x'));
+}
+
+void strcpy_test() {
+    char* dst = malloc(100);
+    printf("%s\n", strcpy(dst, "ORANGE"));
+    printf("%s\n", strcpy(dst, "apple"));
+    printf("%s\n", strncpy(dst, "apple", 2));
+    printf("%s\n", strncpy(dst, "apple", 0));
+    printf("%s\n", stpcpy(dst, "O"));
+    free(dst);
+}
+
+int main() {
+    strcmp_test();
+    strncmp_test();
+    substr_test();
+    strcpy_test();
+    return 0;
 }

@@ -105,6 +105,36 @@ unsafe extern "C" fn strrchr(s: *const c_char, c: c_int) -> *mut c_char {
 }
 
 #[no_mangle]
+unsafe extern "C" fn strcpy(dst: *mut c_char, src: *mut c_char) -> *mut c_char {
+    assert!(!src.is_null());
+
+    let dst = NonNull::new(dst).expect("Unexpected NULL argument to `strcpy`");
+    let src = unsafe { CStr::from_ptr(src) };
+
+    unsafe { shellder::string::strcpy(dst, src).as_ptr() }
+}
+
+#[no_mangle]
+unsafe extern "C" fn strncpy(dst: *mut c_char, src: *mut c_char, n: usize) -> *mut c_char {
+    assert!(!src.is_null());
+
+    let dst = NonNull::new(dst).expect("Unexpected NULL argument to `strcpy`");
+    let src = unsafe { CStr::from_ptr(src) };
+
+    unsafe { shellder::string::strncpy(dst, src, n).as_ptr() }
+}
+
+#[no_mangle]
+unsafe extern "C" fn stpcpy(dst: *mut c_char, src: *mut c_char) -> *mut c_char {
+    assert!(!src.is_null());
+
+    let dst = NonNull::new(dst).expect("Unexpected NULL argument to `strcpy`");
+    let src = unsafe { CStr::from_ptr(src) };
+
+    unsafe { shellder::string::stpcpy(dst, src).as_ptr() }
+}
+
+#[no_mangle]
 extern "C" fn toupper(c: c_int) -> c_int {
     shellder::string::toupper(c)
 }

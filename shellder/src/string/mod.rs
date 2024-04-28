@@ -1,6 +1,7 @@
 use core::{
     cmp::{self, Ordering},
     ffi::{c_char, CStr},
+    ptr::NonNull,
 };
 
 mod ctype;
@@ -118,9 +119,69 @@ pub fn strrchr(haystack: &CStr, needle: c_char) -> Option<&CStr> {
     None
 }
 
+// Returns (ptr to first byte of dst, ptr to last byte of dst)
+unsafe fn strcpy_inner(
+    dst: NonNull<c_char>,
+    src: &CStr,
+    n: Option<usize>,
+) -> (NonNull<c_char>, NonNull<c_char>) {
+    let dstptr = dst.as_ptr();
+    let src = src.to_bytes();
+    let n = cmp::min(src.len(), n.unwrap_or(src.len()));
+
+    let mut index = 0;
+    while index < n {
+        unsafe {
+            *dstptr.wrapping_byte_add(index) = src[index] as c_char;
+        }
+        index += 1;
+    }
+
+    // Add nul byte
+    let last_byte = dstptr.wrapping_byte_add(index);
+    if n == src.len() {
+        unsafe {
+            *last_byte = 0;
+        }
+    }
+
+    (dst, NonNull::new(last_byte).expect("Unexpected NULL"))
+}
+
+/// Copy string `src` into `dst,` and return `dst`
+///
+/// # Safety
+///
+/// `dst` must be a pointer to a region of memory with at least `strlen(src)+1` contiguous writable
+/// bytes
+pub unsafe fn strcpy(dst: NonNull<c_char>, src: &CStr) -> NonNull<c_char> {
+    unsafe { strcpy_inner(dst, src, None).0 }
+}
+
+/// Copy string `src` into `dst` for at most `n` bytes, and return `dst`
+///
+/// # Safety
+///
+/// `dst` must be a pointer to a region of memory with at least `strlen(src)+1` contiguous writable
+/// bytes
+pub unsafe fn strncpy(dst: NonNull<c_char>, src: &CStr, n: usize) -> NonNull<c_char> {
+    unsafe { strcpy_inner(dst, src, Some(n)).0 }
+}
+
+/// Copy string `src` into `dst,` and return pointer to `dst`'s terminating NUL byte
+///
+/// # Safety
+///
+/// `dst` must be a pointer to a region of memory with at least `strlen(src)+1` contiguous writable
+/// bytes
+pub unsafe fn stpcpy(dst: NonNull<c_char>, src: &CStr) -> NonNull<c_char> {
+    unsafe { strcpy_inner(dst, src, None).1 }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::ptr;
 
     #[test]
     fn string_length() {
@@ -154,5 +215,19 @@ mod tests {
         assert_eq!(strrchr(c"dagan", b'a' as c_char), Some(c"an"));
         assert_eq!(strchr(c"dagan", b'x' as c_char), None);
         assert_eq!(strrchr(c"dagan", b'x' as c_char), None);
+    }
+
+    #[test]
+    fn copy_strings() {
+        let mut dest = [0x7F as c_char; 100];
+        let dest = NonNull::new(ptr::from_mut(&mut dest) as *mut c_char).unwrap();
+        unsafe {
+            assert_eq!(CStr::from_ptr(strcpy(dest, c"apple").as_ptr()), c"apple");
+            assert_eq!(CStr::from_ptr(strcpy(dest, c"").as_ptr()), c"");
+            assert_eq!(
+                CStr::from_ptr(strncpy(dest, c"martinez", 3).as_ptr()),
+                c"marle"
+            );
+        }
     }
 }
