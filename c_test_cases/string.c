@@ -33,4 +33,10 @@ int main() {
         printf("%d\n", norm(strncasecmp("apple", "apple", i)));
         printf("%d\n", norm(strncasecmp("apple", "aPPLe", i)));
     }
+
+    printf("%s\n", strstr("apple", "le"));
+    printf("%p\n", strstr("apple", "te"));
+    printf("%s\n", strchr("apple", 'p'));
+    printf("%s\n", strrchr("apple", 'p'));
+    printf("%p\n", strrchr("apple", 'x'));
 }

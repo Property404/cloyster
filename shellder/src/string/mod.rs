@@ -1,6 +1,6 @@
 use core::{
     cmp::{self, Ordering},
-    ffi::CStr,
+    ffi::{c_char, CStr},
 };
 
 mod ctype;
@@ -94,6 +94,30 @@ pub fn strstr<'a>(haystack: &'a CStr, needle: &CStr) -> Option<&'a CStr> {
     None
 }
 
+/// Locate a character `needle` in `haystack`
+#[must_use]
+pub fn strchr(haystack: &CStr, needle: c_char) -> Option<&CStr> {
+    for (index, byte) in haystack.to_bytes().iter().enumerate() {
+        if *byte as c_char == needle {
+            return unsafe { Some(CStr::from_ptr(haystack.as_ptr().wrapping_byte_add(index))) };
+        }
+    }
+
+    None
+}
+
+/// Locate a character `needle` in `haystack,` searching backwards
+#[must_use]
+pub fn strrchr(haystack: &CStr, needle: c_char) -> Option<&CStr> {
+    for (index, byte) in haystack.to_bytes().iter().enumerate().rev() {
+        if *byte as c_char == needle {
+            return unsafe { Some(CStr::from_ptr(haystack.as_ptr().wrapping_byte_add(index))) };
+        }
+    }
+
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -122,5 +146,13 @@ mod tests {
     fn strstr_test() {
         assert_eq!(strstr(c"dagan", c"agan"), Some(c"agan"));
         assert_eq!(strstr(c"dagan", c"organ"), None);
+    }
+
+    #[test]
+    fn strchr_test() {
+        assert_eq!(strchr(c"dagan", b'a' as c_char), Some(c"agan"));
+        assert_eq!(strrchr(c"dagan", b'a' as c_char), Some(c"an"));
+        assert_eq!(strchr(c"dagan", b'x' as c_char), None);
+        assert_eq!(strrchr(c"dagan", b'x' as c_char), None);
     }
 }

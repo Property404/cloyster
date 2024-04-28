@@ -83,6 +83,28 @@ unsafe extern "C" fn strstr(haystack: *const c_char, needle: *const c_char) -> *
 }
 
 #[no_mangle]
+unsafe extern "C" fn strchr(s: *const c_char, c: c_int) -> *mut c_char {
+    let Ok(c) = c.try_into() else {
+        return ptr::null_mut();
+    };
+    let s = unsafe { CStr::from_ptr(s) };
+    shellder::string::strchr(s, c)
+        .map(|v| v.as_ptr() as *mut c_char)
+        .unwrap_or(ptr::null_mut())
+}
+
+#[no_mangle]
+unsafe extern "C" fn strrchr(s: *const c_char, c: c_int) -> *mut c_char {
+    let Ok(c) = c.try_into() else {
+        return ptr::null_mut();
+    };
+    let s = unsafe { CStr::from_ptr(s) };
+    shellder::string::strrchr(s, c)
+        .map(|v| v.as_ptr() as *mut c_char)
+        .unwrap_or(ptr::null_mut())
+}
+
+#[no_mangle]
 extern "C" fn toupper(c: c_int) -> c_int {
     shellder::string::toupper(c)
 }
