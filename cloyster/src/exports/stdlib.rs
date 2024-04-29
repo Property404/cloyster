@@ -2,6 +2,12 @@ use core::ffi::{c_char, c_double, c_int, c_long, c_longlong, CStr};
 
 #[must_use]
 #[no_mangle]
+unsafe extern "C" fn abs(x: c_int) -> c_int {
+    x.abs()
+}
+
+#[must_use]
+#[no_mangle]
 unsafe extern "C" fn atoi(nptr: *const c_char) -> c_int {
     let nptr = unsafe { CStr::from_ptr(nptr) };
     shellder::stdlib::atoi(nptr).unwrap_or(0)
