@@ -28,7 +28,7 @@ fn panic(info: &PanicInfo) -> ! {
             "(write error while panicking)"
         );
     }
-    shellder::exit::abort();
+    shellder::stdlib::abort();
 }
 
 #[cfg(not(test))]

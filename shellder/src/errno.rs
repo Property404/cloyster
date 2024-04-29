@@ -13,6 +13,10 @@ pub enum Errno {
     CloysterUnknown = 0x1000,
     /// Fmt error
     CloysterFmtError,
+    /// Unicode conversion error
+    CloysterUnicodeError,
+    /// Number parsing error
+    CloysterParseError,
     /// Failed integer conversion
     CloysterConversionError,
     /// Integer Overflow
@@ -44,6 +48,18 @@ impl From<fmt::Error> for Errno {
 impl From<num::TryFromIntError> for Errno {
     fn from(_err: num::TryFromIntError) -> Self {
         Self::CloysterConversionError
+    }
+}
+
+impl From<num::ParseIntError> for Errno {
+    fn from(_err: num::ParseIntError) -> Self {
+        Self::CloysterParseError
+    }
+}
+
+impl From<num::ParseFloatError> for Errno {
+    fn from(_err: num::ParseFloatError) -> Self {
+        Self::CloysterParseError
     }
 }
 
