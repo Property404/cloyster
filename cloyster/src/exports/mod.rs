@@ -1,4 +1,5 @@
 mod exit;
+#[cfg(not(test))]
 mod malloc;
 mod math;
 mod stdio;

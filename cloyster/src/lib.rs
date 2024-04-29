@@ -11,7 +11,6 @@ mod assert;
 #[cfg(not(test))]
 mod crt0;
 mod errno;
-#[cfg(not(test))]
 mod exports;
 mod globals;
 mod init;
