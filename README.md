@@ -6,8 +6,8 @@ A big flaw here is that thread locals are barely implemented, so errno is only
 protected in Rust with `spin::Mutex` 😬
 
 Enough functionality is implemented to run
-[dbfi](https://github.com/Property404/dbfi) nearly unmodified (the time
-function needs to be set to `time()`)
+[dbfi](https://github.com/Property404/dbfi) unmodified (except for the
+Makefile)
 
 Only supports Linux(x86_64 and RISC-V)
 
