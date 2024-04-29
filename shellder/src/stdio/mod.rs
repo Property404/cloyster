@@ -62,7 +62,7 @@ pub fn putchar(c: c_int) -> Result<c_int, Errno> {
 ///
 /// # C Signature
 ///
-/// `int putc(int c, FILE *stream);`
+/// `int fputc(int c, FILE *stream);`
 ///
 /// # Returns
 ///
@@ -71,10 +71,10 @@ pub fn putchar(c: c_int) -> Result<c_int, Errno> {
 /// # Safety
 ///
 /// `stream` must be a valid stream opened with [fopen]
-pub unsafe fn putc(c: c_int, stream: NonNull<File>) -> Result<c_int, Errno> {
+pub unsafe fn fputc(c: c_int, stream: NonNull<File>) -> Result<c_int, Errno> {
     let c: c_char = c
         .try_into()
-        .expect("Argument to `putc` must be a valid C character");
+        .expect("Argument to `fputc` must be a valid C character");
 
     let stream = stream.as_ptr();
     let fd = unsafe { (*stream).fd };

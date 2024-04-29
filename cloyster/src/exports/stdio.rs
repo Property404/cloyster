@@ -28,11 +28,18 @@ extern "C" fn putchar(c: c_int) -> c_int {
     }
 }
 
+// This is an alias for `fputc`
 #[no_mangle]
 #[must_use]
 unsafe extern "C" fn putc(c: c_int, stream: Option<NonNull<File>>) -> c_int {
+    unsafe { fputc(c, stream) }
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn fputc(c: c_int, stream: Option<NonNull<File>>) -> c_int {
     unsafe {
-        match shellder::stdio::putc(c, stream.expect("Unexpected null arg to `putc()`")) {
+        match shellder::stdio::fputc(c, stream.expect("Unexpected null arg to `putc()`")) {
             Ok(val) => val,
             Err(_err) => EOF,
         }
