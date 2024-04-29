@@ -21,10 +21,6 @@ use printf::printf_impl;
 /// # Returns
 ///
 /// A non-negative number on success, or EOF on error
-///
-/// # Safety
-///
-/// `s` must be a pointer to a null-terminated string
 pub fn puts(s: &CStr) -> Result<c_int, Errno> {
     let length = crate::string::strlen(s);
 
@@ -33,6 +29,27 @@ pub fn puts(s: &CStr) -> Result<c_int, Errno> {
     putchar(b'\n'.into())?;
 
     Ok(res)
+}
+
+/// Output string to stream with terminating newline
+///
+/// # C Signature
+///
+/// `int fputs(const char *s);`
+///
+/// # Returns
+///
+/// A non-negative number on success, or EOF on error
+///
+/// # Safety
+///
+/// `stream` must be a pointer to a File
+pub unsafe fn fputs(s: &CStr, stream: NonNull<File>) -> Result<c_int, Errno> {
+    let res = unsafe { fwrite(s.as_ptr() as *const u8, crate::string::strlen(s), 1, stream)? };
+    unsafe {
+        fputc(b'\n' as c_int, stream)?;
+    }
+    Ok(c_int::try_from(res)? + 1)
 }
 
 /// Output single extended-ASCII character. Note that while this function accepts an integer, it
@@ -81,6 +98,17 @@ pub unsafe fn fputc(c: c_int, stream: NonNull<File>) -> Result<c_int, Errno> {
 
     unsafe {
         crate::unistd::write(fd.0, ptr::from_ref(&c) as *const c_void, 1)?;
+    }
+
+    Ok(c.into())
+}
+
+/// Get one C character from stdin
+pub fn getchar() -> Result<c_int, Errno> {
+    let mut c: c_char = 0;
+
+    unsafe {
+        crate::unistd::read(0, ptr::from_mut(&mut c) as *mut c_void, 1)?;
     }
 
     Ok(c.into())

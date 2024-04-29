@@ -21,6 +21,20 @@ unsafe extern "C" fn puts(s: *const c_char) -> c_int {
 
 #[no_mangle]
 #[must_use]
+unsafe extern "C" fn fputs(s: *const c_char, stream: Option<NonNull<File>>) -> c_int {
+    assert!(!s.is_null());
+
+    let stream = stream.expect("Unexpected null arg to `fputs()`");
+    let s = unsafe { CStr::from_ptr(s) };
+
+    match unsafe { shellder::stdio::fputs(s, stream) } {
+        Ok(val) => val,
+        Err(_err) => EOF,
+    }
+}
+
+#[no_mangle]
+#[must_use]
 extern "C" fn putchar(c: c_int) -> c_int {
     match shellder::stdio::putchar(c) {
         Ok(val) => val,
@@ -54,6 +68,15 @@ unsafe extern "C" fn getc(stream: Option<NonNull<File>>) -> c_int {
             Ok(val) => val,
             Err(_err) => EOF,
         }
+    }
+}
+
+#[no_mangle]
+#[must_use]
+extern "C" fn getchar() -> c_int {
+    match shellder::stdio::getchar() {
+        Ok(val) => val,
+        Err(_err) => EOF,
     }
 }
 
