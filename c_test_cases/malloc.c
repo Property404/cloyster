@@ -30,7 +30,7 @@ int main() {
     memset(x, 0xAB, 10);
     assert(x != NULL);
     x = realloc(x, 100);
-    for(int i=0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
         assert(x[i] == 0xAB);
     }
     memset(x, 0xBA, 100);
