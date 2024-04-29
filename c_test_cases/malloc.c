@@ -26,7 +26,6 @@ int main() {
     // Test realloc
     // This is currently not working because realloc was not implemented
     // correctly
-    /*
     x = malloc(10);
     memset(x, 0xAB, 10);
     assert(x != NULL);
@@ -36,7 +35,6 @@ int main() {
     }
     memset(x, 0xBA, 100);
     free(x);
-    */
 
     return 0;
 }

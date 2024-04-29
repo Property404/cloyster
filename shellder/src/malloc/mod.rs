@@ -36,11 +36,23 @@ pub fn calloc(nmemb: usize, size: usize) -> Result<NonNull<u8>, Errno> {
 
 /// # Safety
 /// See [free]()
-pub unsafe fn realloc(ptr: NonNull<u8>, size: usize) -> Result<NonNull<u8>, Errno> {
+pub unsafe fn realloc(old_region: NonNull<u8>, size: usize) -> Result<NonNull<u8>, Errno> {
+    let mut allocator = ALLOCATOR.lock();
+    let allocator = allocator.get_mut().expect("Bug: allocator not initialized");
+
     unsafe {
-        free(ptr)?;
+        let old_size = allocator.size_of(old_region)?;
+        let new_region = allocator.alloc(size)?;
+
+        crate::string::memcpy(
+            new_region.as_ptr(),
+            old_region.as_ptr(),
+            core::cmp::min(size, old_size),
+        );
+
+        allocator.free(old_region)?;
+        Ok(new_region)
     }
-    malloc(size)
 }
 
 /// Free a previously allocation section of memory

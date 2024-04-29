@@ -90,6 +90,18 @@ impl<T: MemoryExtender> Allocator<T> {
         Ok(node)
     }
 
+    /// Return the size of a memory allocation
+    ///
+    /// # Safety
+    /// Ptr must be a valid, previosly allocated region of memory
+    pub(crate) unsafe fn size_of(&mut self, ptr: NonNull<u8>) -> Result<usize, Errno> {
+        let ptr = ptr.as_ptr();
+        let node = unsafe { ((ptr.wrapping_sub(HDR_SIZE)) as *const Node).as_ref() }
+            .ok_or(Errno::CloysterAlloc)?;
+        assert!(!node.free);
+        Ok(node.size)
+    }
+
     /// # Safety
     /// Ptr must be a valid, previosly allocated region of memory
     pub(crate) unsafe fn free(&mut self, ptr: NonNull<u8>) -> Result<(), Errno> {
