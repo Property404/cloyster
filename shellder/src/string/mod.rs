@@ -178,6 +178,25 @@ pub unsafe fn stpcpy(dst: NonNull<c_char>, src: &CStr) -> NonNull<c_char> {
     unsafe { strcpy_inner(dst, src, None).1 }
 }
 
+/// Concatenate string `src` to end of `dst,` and return pointer to `dst`'s terminating NUL byte
+///
+/// # Safety
+///
+/// `dst` must be a pointer to a null-termination string in a region of memory with at least
+/// `strlen(dst)+strlen(src)+1` contiguous writable bytes
+pub unsafe fn strcat(dst: NonNull<c_char>, src: &CStr) -> NonNull<c_char> {
+    {
+        let mut dst = dst.as_ptr();
+        while unsafe { *dst } != 0 {
+            dst = dst.wrapping_byte_add(1);
+        }
+        unsafe {
+            strcpy_inner(NonNull::new(dst).expect("Unexpected overflow"), src, None);
+        }
+    }
+    dst
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -228,6 +247,17 @@ mod tests {
                 CStr::from_ptr(strncpy(dest, c"martinez", 3).as_ptr()),
                 c"marle"
             );
+        }
+    }
+
+    #[test]
+    fn concat_strings() {
+        let mut dest = [0x7F as c_char; 100];
+        let dest = NonNull::new(ptr::from_mut(&mut dest) as *mut c_char).unwrap();
+        unsafe {
+            strcpy(dest, c"apple");
+            strcat(dest, c" juice");
+            assert_eq!(CStr::from_ptr(dest.as_ptr()), c"apple juice");
         }
     }
 }
