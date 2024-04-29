@@ -1,6 +1,6 @@
 use crate::errno;
 use core::{
-    ffi::{c_char, c_int, c_long, c_void, CStr},
+    ffi::{c_char, c_int, c_long, c_void, CStr, VaListImpl},
     ptr::{self, NonNull},
 };
 use shellder::stdio::File;
@@ -53,7 +53,12 @@ unsafe extern "C" fn getc(stream: Option<NonNull<File>>) -> c_int {
 #[no_mangle]
 #[must_use]
 unsafe extern "C" fn printf(fmt: *const c_char, args: ...) -> c_int {
-    // This doesn't use the Shellder implementation because we'd recurse indefinitely
+    unsafe { vprintf(fmt, args) }
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn vprintf(fmt: *const c_char, args: VaListImpl) -> c_int {
     assert!(!fmt.is_null());
     unsafe {
         let fmt = CStr::from_ptr(fmt);
@@ -65,6 +70,12 @@ unsafe extern "C" fn printf(fmt: *const c_char, args: ...) -> c_int {
 #[no_mangle]
 #[must_use]
 unsafe extern "C" fn fprintf(stream: *mut File, fmt: *const c_char, args: ...) -> c_int {
+    unsafe { vfprintf(stream, fmt, args) }
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn vfprintf(stream: *mut File, fmt: *const c_char, args: VaListImpl) -> c_int {
     assert!(!fmt.is_null());
     let stream = NonNull::new(stream).expect("Unexpected null arg to `fprintf()`");
     unsafe {
