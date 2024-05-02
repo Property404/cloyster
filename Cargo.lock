@@ -18,12 +18,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cloyster"
 version = "0.0.0"
 dependencies = [
- "bitflags",
  "log",
- "rand",
  "shellder",
  "spin",
- "syscalls",
 ]
 
 [[package]]
@@ -50,9 +47,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.153"
+version = "0.2.154"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
+checksum = "ae743338b92ff9146ce83992f766a31066a91a8c84a45e0e9f21e7cf6de6d346"
 
 [[package]]
 name = "log"
@@ -120,7 +117,6 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "enumn",
- "log",
  "rand",
  "spin",
  "syscalls",

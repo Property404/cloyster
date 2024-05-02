@@ -13,11 +13,6 @@ crate-type = ["staticlib"]
 unsafe_op_in_unsafe_fn = "deny"
 
 [dependencies]
-bitflags = "2.5.0"
 log = "0.4.21"
 shellder = { version = "0.0.0", path = "../shellder" }
 spin = { version = "0.9.8", default-features = false, features = ["spin_mutex"] }
-syscalls = { version = "0.6.18", default-features = false }
-
-[dev-dependencies]
-rand = "0.8.5"
