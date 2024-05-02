@@ -50,13 +50,15 @@ impl fmt::Write for Descriptor {
 pub struct File {
     pub fd: Descriptor,
     pub error: c_int,
+    pub eof: bool,
     pub offset: u64,
 }
 
 impl File {
-    const fn from_desc(fd: Descriptor) -> Self {
+    pub(crate) const fn from_desc(fd: Descriptor) -> Self {
         Self {
             fd,
+            eof: false,
             error: 0,
             offset: 0,
         }

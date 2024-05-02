@@ -52,6 +52,42 @@ pub unsafe fn fputs(s: &CStr, stream: NonNull<File>) -> Result<c_int, Errno> {
     Ok(c_int::try_from(res)? + 1)
 }
 
+/// Clear error indicator and eof indicator
+///
+///
+/// # Safety
+///
+/// `stream` must be a valid pointer to a File
+pub unsafe fn clearerr(stream: NonNull<File>) {
+    let stream = stream.as_ptr();
+    unsafe {
+        (*stream).error = 0;
+        (*stream).eof = false;
+    }
+}
+
+/// Return true if eof indicator is set
+///
+///
+/// # Safety
+///
+/// `stream` must be a valid pointer to a File
+pub unsafe fn feof(stream: NonNull<File>) -> bool {
+    let stream = stream.as_ptr();
+    unsafe { (*stream).eof }
+}
+
+/// Return error indicator
+///
+///
+/// # Safety
+///
+/// `stream` must be a valid pointer to a File
+pub unsafe fn ferror(stream: NonNull<File>) -> Errno {
+    let stream = stream.as_ptr();
+    unsafe { Errno::from_int((*stream).error) }
+}
+
 /// Output single extended-ASCII character. Note that while this function accepts an integer, it
 /// will panic with any input greater than 0xFF.
 ///
@@ -179,11 +215,7 @@ pub fn fopen(pathname: &CStr, mode: &CStr) -> Result<NonNull<File>, Errno> {
     let file_ptr = malloc(mem::size_of::<File>())?.cast();
 
     unsafe {
-        *(file_ptr.as_ptr()) = File {
-            fd: Descriptor(fd),
-            error: 0,
-            offset: 0,
-        };
+        *(file_ptr.as_ptr()) = File::from_desc(Descriptor(fd));
     }
 
     Ok(file_ptr)

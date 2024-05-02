@@ -28,6 +28,14 @@ pub enum Errno {
 }
 
 impl Errno {
+    /// From positive integer
+    pub fn from_int(err: c_int) -> Self {
+        let Ok(err) = err.try_into() else {
+            return Self::CloysterConversionError;
+        };
+        Self::n(err).unwrap_or(Errno::CloysterUnknown)
+    }
+
     /// Return as positive value, to set errno
     pub fn as_positive(self) -> c_int {
         self as c_int
@@ -66,9 +74,6 @@ impl From<num::ParseFloatError> for Errno {
 #[cfg(target_os = "linux")]
 impl From<syscalls::Errno> for Errno {
     fn from(err: syscalls::Errno) -> Errno {
-        let Ok(err) = err.into_raw().try_into() else {
-            return Self::CloysterConversionError;
-        };
-        Self::n(err).unwrap_or(Errno::CloysterUnknown)
+        Self::from_int(err.into_raw())
     }
 }

@@ -34,6 +34,28 @@ unsafe extern "C" fn fputs(s: *const c_char, stream: Option<NonNull<File>>) -> c
 }
 
 #[no_mangle]
+unsafe extern "C" fn clearerr(stream: Option<NonNull<File>>) {
+    let stream = stream.expect("Unexpected null arg to `clearerr()`");
+    unsafe {
+        shellder::stdio::clearerr(stream);
+    }
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn ferror(stream: Option<NonNull<File>>) -> c_int {
+    let stream = stream.expect("Unexpected null arg to `ferror()`");
+    unsafe { shellder::stdio::ferror(stream).as_positive() }
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn feof(stream: Option<NonNull<File>>) -> c_int {
+    let stream = stream.expect("Unexpected null arg to `feof()`");
+    unsafe { shellder::stdio::feof(stream).into() }
+}
+
+#[no_mangle]
 #[must_use]
 extern "C" fn putchar(c: c_int) -> c_int {
     match shellder::stdio::putchar(c) {
