@@ -127,6 +127,35 @@ unsafe extern "C" fn fprintf(stream: *mut File, fmt: *const c_char, args: ...) -
 
 #[no_mangle]
 #[must_use]
+unsafe extern "C" fn sprintf(s: Option<NonNull<c_char>>, fmt: *const c_char, args: ...) -> c_int {
+    assert!(!fmt.is_null());
+    let s = s.expect("Unexpected null arg to `sprintf()`");
+    unsafe {
+        let fmt = CStr::from_ptr(fmt);
+        shellder::stdio::snprintf(s, usize::MAX, fmt, args)
+    }
+    .unwrap_or_else(|err| err.as_negative())
+}
+
+#[no_mangle]
+#[must_use]
+unsafe extern "C" fn snprintf(
+    s: Option<NonNull<c_char>>,
+    size: usize,
+    fmt: *const c_char,
+    args: ...
+) -> c_int {
+    assert!(!fmt.is_null());
+    let s = s.expect("Unexpected null arg to `snprintf()`");
+    unsafe {
+        let fmt = CStr::from_ptr(fmt);
+        shellder::stdio::snprintf(s, size, fmt, args)
+    }
+    .unwrap_or_else(|err| err.as_negative())
+}
+
+#[no_mangle]
+#[must_use]
 unsafe extern "C" fn vfprintf(stream: *mut File, fmt: *const c_char, args: VaListImpl) -> c_int {
     assert!(!fmt.is_null());
     let stream = NonNull::new(stream).expect("Unexpected null arg to `fprintf()`");

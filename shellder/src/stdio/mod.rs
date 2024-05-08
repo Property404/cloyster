@@ -194,6 +194,24 @@ pub unsafe fn fprintf(stream: NonNull<File>, fmt: &CStr, args: VaListImpl) -> Re
     unsafe { printf_impl((*stream.as_ptr()).fd, fmt, args) }
 }
 
+/// Like [printf()] but writes to a string
+///
+/// # Safety
+///
+/// See [printf()]
+///
+/// Additionally, `s` must point to a valid writable area of memory at least `n` bytes long, and
+/// not overlap with `fmt` or any args.
+pub unsafe fn snprintf(
+    s: NonNull<c_char>,
+    n: usize,
+    fmt: &CStr,
+    args: VaListImpl,
+) -> Result<c_int, Errno> {
+    let writer = unsafe { printf::CStringWriter::new(s, n) };
+    unsafe { printf_impl(writer, fmt, args) }
+}
+
 /// Open a file
 pub fn fopen(pathname: &CStr, mode: &CStr) -> Result<NonNull<File>, Errno> {
     use crate::unistd::types::{ModeFlags, OpenFlags};

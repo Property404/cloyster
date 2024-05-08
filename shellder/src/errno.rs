@@ -19,6 +19,8 @@ pub enum Errno {
     CloysterParseError,
     /// Failed integer conversion
     CloysterConversionError,
+    /// Buffer Overflow
+    CloysterBufferOverflow,
     /// Integer Overflow
     CloysterOverflow,
     /// Generic syscall failure. More information can usually be found in `errno`

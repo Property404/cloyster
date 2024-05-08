@@ -2,6 +2,7 @@ use crate::errno::Errno;
 use core::{
     ffi::{c_char, c_int, CStr, VaListImpl},
     fmt::{self, Write},
+    ptr::NonNull,
 };
 
 // VaList/VaListImpls can't be constructed, so we need a trait in order to create mock objects
@@ -57,6 +58,38 @@ impl<T: Cout> Cout for &mut T {
 
     fn put_cstr(&mut self, cstr: &[u8]) -> Result<(), Errno> {
         (*self).put_cstr(cstr)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct CStringWriter {
+    ptr: *mut c_char,
+    index: usize,
+    size: usize,
+}
+
+impl CStringWriter {
+    pub(crate) unsafe fn new(ptr: NonNull<c_char>, size: usize) -> Self {
+        Self {
+            ptr: ptr.as_ptr(),
+            index: 0,
+            size,
+        }
+    }
+}
+
+impl Cout for CStringWriter {
+    fn put_char(&mut self, c: c_char) -> Result<(), Errno> {
+        if self.index < self.size.saturating_sub(1) {
+            unsafe {
+                *(self.ptr.wrapping_byte_add(self.index)) = c;
+                *(self.ptr.wrapping_byte_add(self.index + 1)) = 0;
+            }
+            self.index += 1;
+            Ok(())
+        } else {
+            Err(Errno::CloysterBufferOverflow)
+        }
     }
 }
 
