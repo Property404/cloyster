@@ -1,12 +1,12 @@
-mod alloc_impl;
+mod free_list_impl;
 mod usize_ext;
 
 use crate::errno::Errno;
-use alloc_impl::{Allocator, DefaultMemoryExtender};
 use core::{cell::OnceCell, ptr::NonNull};
+use free_list_impl::Allocator;
 use spin::Mutex;
 
-static ALLOCATOR: Mutex<OnceCell<Allocator<DefaultMemoryExtender>>> = Mutex::new(OnceCell::new());
+static ALLOCATOR: Mutex<OnceCell<Allocator>> = Mutex::new(OnceCell::new());
 
 pub fn get_num_allocations() -> usize {
     let allocator = ALLOCATOR.lock();
@@ -18,7 +18,7 @@ pub fn get_num_allocations() -> usize {
 
 pub fn malloc(size: usize) -> Result<NonNull<u8>, Errno> {
     let mut allocator = ALLOCATOR.lock();
-    allocator.get_or_init(|| Allocator::new(DefaultMemoryExtender).unwrap());
+    allocator.get_or_init(|| Allocator::new().unwrap());
     allocator
         .get_mut()
         .expect("Bug: allocator not initialized")

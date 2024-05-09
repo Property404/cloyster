@@ -14,5 +14,5 @@ unsafe_op_in_unsafe_fn = "deny"
 
 [dependencies]
 log = "0.4.21"
-shellder = { version = "0.0.0", path = "../shellder" }
+shellder = { path = "../shellder" }
 spin = { version = "0.9.8", default-features = false, features = ["spin_mutex"] }

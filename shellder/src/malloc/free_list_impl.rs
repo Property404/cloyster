@@ -9,6 +9,8 @@ const MIN_ALIGN: usize = 32;
 const HDR_SIZE: usize = MIN_ALIGN;
 const PAGE_SIZE: usize = 4096;
 
+pub(crate) type Allocator = FreeListAllocator<DefaultMemoryExtender>;
+
 pub(crate) trait MemoryExtender {
     unsafe fn sbrk(&mut self, increment: usize) -> Result<NonNull<u8>, Errno>;
 }
@@ -31,7 +33,7 @@ struct Node {
 }
 
 // A free list allocator
-pub(crate) struct Allocator<T> {
+pub(crate) struct FreeListAllocator<T> {
     head: NonNull<Node>,
     size: usize,
     allocations: usize,
@@ -39,10 +41,16 @@ pub(crate) struct Allocator<T> {
     total_claims: usize,
 }
 
-unsafe impl<T: Send> Send for Allocator<T> {}
+unsafe impl<T: Send> Send for FreeListAllocator<T> {}
 
-impl<T: MemoryExtender> Allocator<T> {
-    pub(crate) fn new(mut memory_extender: T) -> Result<Self, Errno> {
+impl FreeListAllocator<DefaultMemoryExtender> {
+    pub(crate) fn new() -> Result<Self, Errno> {
+        Self::from_memory_extender(DefaultMemoryExtender)
+    }
+}
+
+impl<T: MemoryExtender> FreeListAllocator<T> {
+    fn from_memory_extender(mut memory_extender: T) -> Result<Self, Errno> {
         assert!(HDR_SIZE >= mem::size_of::<Node>());
         let mut head = unsafe { memory_extender.sbrk(PAGE_SIZE)?.cast() };
         unsafe {
@@ -208,7 +216,8 @@ mod tests {
     #[test]
     fn rand_allocations() {
         let mut rng = rand::thread_rng();
-        let mut allocator = Allocator::new(MockExtender::new(100000)).unwrap();
+        let mut allocator =
+            FreeListAllocator::from_memory_extender(MockExtender::new(100000)).unwrap();
 
         for _ in 1..100 {
             let mut allocs = Vec::new();
@@ -232,7 +241,8 @@ mod tests {
     #[test]
     fn multiple_allocations() {
         let mut allocs = Vec::new();
-        let mut allocator = Allocator::new(MockExtender::new(100000)).unwrap();
+        let mut allocator =
+            FreeListAllocator::from_memory_extender(MockExtender::new(100000)).unwrap();
 
         for i in 1..400 {
             let area = allocator.alloc(31).unwrap();
@@ -252,7 +262,8 @@ mod tests {
 
     #[test]
     fn allocate_more_than_a_page() {
-        let mut allocator = Allocator::new(MockExtender::new(PAGE_SIZE * 10)).unwrap();
+        let mut allocator =
+            FreeListAllocator::from_memory_extender(MockExtender::new(PAGE_SIZE * 10)).unwrap();
         unsafe {
             let area = allocator.alloc(PAGE_SIZE * 5 + 3).unwrap();
             allocator.free(area).unwrap();
@@ -262,7 +273,8 @@ mod tests {
 
     #[test]
     fn basic() {
-        let mut allocator = Allocator::new(MockExtender::new(10000)).unwrap();
+        let mut allocator =
+            FreeListAllocator::from_memory_extender(MockExtender::new(10000)).unwrap();
         for _ in 0..1000000 {
             let area = allocator.alloc(800).unwrap();
             assert_eq!(allocator.allocations, 1);
