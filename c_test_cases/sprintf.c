@@ -16,4 +16,6 @@ int main() {
     assert(!strcmp(s, "Hi"));
 
     free(s);
+
+    return 0;
 }
