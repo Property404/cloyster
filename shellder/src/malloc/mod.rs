@@ -22,7 +22,7 @@ pub fn malloc(size: usize) -> Result<NonNull<u8>, Errno> {
     allocator
         .get_mut()
         .expect("Bug: allocator not initialized")
-        .alloc(size)
+        .alloc_unaligned(size)
 }
 
 pub fn calloc(nmemb: usize, size: usize) -> Result<NonNull<u8>, Errno> {
@@ -42,7 +42,7 @@ pub unsafe fn realloc(old_region: NonNull<u8>, size: usize) -> Result<NonNull<u8
 
     unsafe {
         let old_size = allocator.size_of(old_region)?;
-        let new_region = allocator.alloc(size)?;
+        let new_region = allocator.alloc_unaligned(size)?;
 
         crate::string::memcpy(
             new_region.as_ptr(),

@@ -1,6 +1,7 @@
 use super::usize_ext::UsizeExt;
 use crate::errno::Errno;
 use core::{
+    alloc::Layout,
     mem,
     ptr::{self, NonNull},
 };
@@ -126,7 +127,12 @@ impl<T: MemoryExtender> FreeListAllocator<T> {
         Ok(())
     }
 
-    pub(crate) fn alloc(&mut self, requested_size: usize) -> Result<NonNull<u8>, Errno> {
+    pub(crate) fn alloc_unaligned(&mut self, size: usize) -> Result<NonNull<u8>, Errno> {
+        self.alloc(Layout::from_size_align(size, MIN_ALIGN).map_err(|_| Errno::EINVAL)?)
+    }
+
+    pub(crate) fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, Errno> {
+        let requested_size = layout.size();
         if requested_size == 0 {
             panic!("Program attempted to allocate an object of 0 bytes");
         }
@@ -223,7 +229,9 @@ mod tests {
             let mut allocs = Vec::new();
 
             for i in 1..100 {
-                let area = allocator.alloc(rng.r#gen::<usize>() % 256 + 1).unwrap();
+                let area = allocator
+                    .alloc_unaligned(rng.r#gen::<usize>() % 256 + 1)
+                    .unwrap();
                 allocs.push(area);
                 assert_eq!(allocator.allocations, i);
             }
@@ -245,7 +253,7 @@ mod tests {
             FreeListAllocator::from_memory_extender(MockExtender::new(100000)).unwrap();
 
         for i in 1..400 {
-            let area = allocator.alloc(31).unwrap();
+            let area = allocator.alloc_unaligned(31).unwrap();
             allocs.push(area);
             assert_eq!(allocator.allocations, i);
         }
@@ -265,7 +273,7 @@ mod tests {
         let mut allocator =
             FreeListAllocator::from_memory_extender(MockExtender::new(PAGE_SIZE * 10)).unwrap();
         unsafe {
-            let area = allocator.alloc(PAGE_SIZE * 5 + 3).unwrap();
+            let area = allocator.alloc_unaligned(PAGE_SIZE * 5 + 3).unwrap();
             allocator.free(area).unwrap();
         }
         assert_eq!(allocator.allocations, 0);
@@ -276,7 +284,7 @@ mod tests {
         let mut allocator =
             FreeListAllocator::from_memory_extender(MockExtender::new(10000)).unwrap();
         for _ in 0..1000000 {
-            let area = allocator.alloc(800).unwrap();
+            let area = allocator.alloc_unaligned(800).unwrap();
             assert_eq!(allocator.allocations, 1);
             unsafe {
                 {
