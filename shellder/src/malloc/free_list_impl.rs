@@ -2,7 +2,7 @@ use super::usize_ext::UsizeExt;
 use crate::errno::Errno;
 use core::{
     alloc::Layout,
-    mem,
+    cmp, mem,
     ptr::{self, NonNull},
 };
 
@@ -26,6 +26,7 @@ impl MemoryExtender for DefaultMemoryExtender {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone)]
 struct Node {
     free: bool,
     size: usize,
@@ -62,6 +63,7 @@ impl<T: MemoryExtender> FreeListAllocator<T> {
                 prev_node: None,
             };
         }
+        assert!((head.as_ptr() as usize).is_aligned_to(MIN_ALIGN));
         Ok(Self {
             head,
             size: PAGE_SIZE,
@@ -132,6 +134,7 @@ impl<T: MemoryExtender> FreeListAllocator<T> {
     }
 
     pub(crate) fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, Errno> {
+        let requested_align = cmp::max(layout.align(), MIN_ALIGN);
         let requested_size = layout.size();
         if requested_size == 0 {
             panic!("Program attempted to allocate an object of 0 bytes");
@@ -155,7 +158,28 @@ impl<T: MemoryExtender> FreeListAllocator<T> {
                 continue;
             };
             let noderef = unsafe { noderef.as_mut() };
-            if noderef.free && noderef.size >= requested_size {
+            let data_ptr = ptr::from_mut(noderef) as usize + HDR_SIZE;
+            let align_diff = data_ptr.align_up(requested_align) - data_ptr;
+            if noderef.free && noderef.size + align_diff >= requested_size {
+                let noderef = if align_diff == 0 {
+                    noderef
+                } else {
+                    let newnoderef = unsafe {
+                        ptr::from_mut(noderef)
+                            .wrapping_byte_add(align_diff)
+                            .as_mut()
+                            .expect("Invalid ptr")
+                    };
+                    assert!((ptr::from_mut(newnoderef) as usize + HDR_SIZE)
+                        .is_aligned_to(requested_align));
+                    *newnoderef = (*noderef).clone();
+                    if let Some(mut prev) = newnoderef.prev_node {
+                        let prev = unsafe { prev.as_mut() };
+                        prev.size += align_diff;
+                        prev.next_node = Some(NonNull::new(ptr::from_mut(newnoderef)).unwrap())
+                    }
+                    newnoderef
+                };
                 noderef.free = false;
 
                 if noderef.size >= requested_size + HDR_SIZE + MIN_ALIGN {
@@ -196,8 +220,8 @@ mod tests {
 
     impl MockExtender {
         fn new(capacity: usize) -> Self {
-            let mut _backing = Vec::with_capacity(capacity);
-            let base = _backing.as_mut_ptr() as usize;
+            let mut _backing = Vec::with_capacity(capacity + MIN_ALIGN);
+            let base = (_backing.as_mut_ptr() as usize).align_up(MIN_ALIGN);
             let max = base + capacity;
             Self {
                 _backing,
@@ -293,6 +317,22 @@ mod tests {
                     assert_eq!(*area, 0xdeadbeef);
                 }
                 allocator.free(area).unwrap();
+            }
+        }
+        assert_eq!(allocator.allocations, 0);
+    }
+
+    #[test]
+    fn allocate_alignment() {
+        let mut allocator =
+            FreeListAllocator::from_memory_extender(MockExtender::new(10000)).unwrap();
+        for align in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048] {
+            let ptr = allocator
+                .alloc(Layout::from_size_align(45, align).unwrap())
+                .unwrap();
+            assert!((ptr.as_ptr() as usize).is_aligned_to(align));
+            unsafe {
+                allocator.free(ptr).unwrap();
             }
         }
         assert_eq!(allocator.allocations, 0);

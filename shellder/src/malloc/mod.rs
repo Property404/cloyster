@@ -2,7 +2,7 @@ mod free_list_impl;
 mod usize_ext;
 
 use crate::errno::Errno;
-use core::{cell::OnceCell, ptr::NonNull};
+use core::{alloc::Layout, cell::OnceCell, ptr::NonNull};
 use free_list_impl::Allocator;
 use spin::Mutex;
 
@@ -23,6 +23,15 @@ pub fn malloc(size: usize) -> Result<NonNull<u8>, Errno> {
         .get_mut()
         .expect("Bug: allocator not initialized")
         .alloc_unaligned(size)
+}
+
+pub fn aligned_alloc(layout: Layout) -> Result<NonNull<u8>, Errno> {
+    let mut allocator = ALLOCATOR.lock();
+    allocator.get_or_init(|| Allocator::new().unwrap());
+    allocator
+        .get_mut()
+        .expect("Bug: allocator not initialized")
+        .alloc(layout)
 }
 
 pub fn calloc(nmemb: usize, size: usize) -> Result<NonNull<u8>, Errno> {

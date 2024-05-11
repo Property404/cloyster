@@ -1,4 +1,5 @@
 use core::{
+    alloc::Layout,
     ffi::c_void,
     ptr::{self, NonNull},
 };
@@ -6,6 +7,16 @@ use core::{
 #[no_mangle]
 extern "C" fn malloc(size: usize) -> *mut c_void {
     shellder::malloc::malloc(size)
+        .map(|v| v.cast().as_ptr())
+        .unwrap_or(ptr::null_mut())
+}
+
+#[no_mangle]
+extern "C" fn aligned_alloc(alignment: usize, size: usize) -> *mut c_void {
+    let Ok(layout) = Layout::from_size_align(size, alignment) else {
+        return ptr::null_mut();
+    };
+    shellder::malloc::aligned_alloc(layout)
         .map(|v| v.cast().as_ptr())
         .unwrap_or(ptr::null_mut())
 }

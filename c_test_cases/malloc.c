@@ -36,5 +36,10 @@ int main() {
     memset(x, 0xBA, 100);
     free(x);
 
+    // MAke sure alignment works
+    x = aligned_alloc(0x100, 100);
+    assert((((uintptr_t)x) & 0xFF) == 0);
+    free(x);
+
     return 0;
 }
