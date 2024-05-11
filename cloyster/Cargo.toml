@@ -12,6 +12,11 @@ crate-type = ["staticlib"]
 # error in a future version of Rust
 unsafe_op_in_unsafe_fn = "deny"
 
+[features]
+default = ["provide_alloc"]
+# Provide a GlobalAllocator implementation
+provide_alloc = []
+
 [dependencies]
 log = "0.4.21"
 shellder = { path = "../shellder" }

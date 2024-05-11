@@ -3,10 +3,13 @@
 #![feature(lang_items)]
 #![feature(c_variadic)]
 #![allow(internal_features)]
+extern crate alloc;
 
 #[cfg(not(test))]
 use core::{fmt::Write, panic::PanicInfo};
 
+#[cfg(all(not(test), feature = "provide_alloc"))]
+mod allocator;
 mod assert;
 #[cfg(not(test))]
 mod crt0;
