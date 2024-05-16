@@ -21,6 +21,11 @@ unsafe extern "C" fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
 }
 
 #[no_mangle]
+unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, n: usize) -> *mut u8 {
+    unsafe { shellder::string::memmove(dst, src, n) }
+}
+
+#[no_mangle]
 unsafe extern "C" fn memset(dst: *mut u8, c: c_int, n: usize) -> *mut u8 {
     let dst = NonNull::new(dst).expect("Unexpected null arg to `memset()`");
     unsafe { shellder::string::memset(dst, c, n).as_ptr() }

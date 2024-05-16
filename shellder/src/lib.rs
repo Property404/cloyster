@@ -11,4 +11,3 @@ pub mod types;
 pub mod unistd;
 
 pub use errno::Errno;
-pub use stdlib::exit;

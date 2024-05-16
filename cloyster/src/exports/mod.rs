@@ -1,4 +1,4 @@
-mod exit;
+pub(crate) mod exit;
 #[cfg(not(test))]
 mod malloc;
 mod math;

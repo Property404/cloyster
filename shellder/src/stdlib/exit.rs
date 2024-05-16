@@ -2,7 +2,7 @@ use crate::malloc;
 use core::ffi::c_int;
 
 /// Causes normal process termination with status `status`
-pub fn exit(status: c_int) -> ! {
+pub fn exit_without_cleanup(status: c_int) -> ! {
     if malloc::get_num_allocations() != 0 {
         panic!("Memory leak detected on exit!");
     }
