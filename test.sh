@@ -2,7 +2,8 @@
 # shellcheck disable=SC2086
 set -e
 
-declare -r CFLAGS="-Wall -Wextra -std=gnu2x -pedantic -Werror -static -Wno-stringop-truncation"
+declare -r CFLAGS="-Wall -Wextra -std=gnu2x -pedantic -Werror -static \
+    -Wno-stringop-truncation -Wno-format"
 
 main() {
     local -r temp_dir="$(mktemp -d)"
