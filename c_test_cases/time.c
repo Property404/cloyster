@@ -4,11 +4,11 @@
 #include <time.h>
 #include <unistd.h>
 
-const time_t TIME_THIS_PROGRAM_WAS_WRITTEN = 1713622848;
+constexpr time_t TIME_THIS_PROGRAM_WAS_WRITTEN = 1713622848;
 
 static void test_clock_gettime() {
     // Get a reference time
-    const time_t reference_time = time(NULL);
+    const time_t reference_time = time(nullptr);
     assert(reference_time > TIME_THIS_PROGRAM_WAS_WRITTEN);
 
     // Make sure that clock_gettime() and time() are approx the same
@@ -20,7 +20,7 @@ static void test_clock_gettime() {
 
 static void test_time() {
     // assert the time returned is a sane value
-    const time_t tval = time(NULL);
+    const time_t tval = time(nullptr);
     assert(tval > TIME_THIS_PROGRAM_WAS_WRITTEN);
 
     // Make sure we're using 64-bit timer (or higher, thought that's unlikely)
@@ -30,13 +30,13 @@ static void test_time() {
 // Make sure we can sleep and that approximately the right amount of time
 // elapses
 static void test_nanosleep() {
-    const time_t start = time(NULL);
+    const time_t start = time(nullptr);
     assert(start > TIME_THIS_PROGRAM_WAS_WRITTEN);
 
     struct timespec sleep_time = {.tv_nsec = 0, .tv_sec = 1};
-    assert(nanosleep(&sleep_time, NULL) == 0);
+    assert(nanosleep(&sleep_time, nullptr) == 0);
 
-    const time_t end = time(NULL);
+    const time_t end = time(nullptr);
     assert(end > start);
     assert(end < start + 5);
 }

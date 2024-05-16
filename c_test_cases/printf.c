@@ -9,10 +9,8 @@ int main() {
     printf("Hex: %x\n", 42);
     printf("Hex: %X\n", 42);
     printf("Char: %c\n", 'B');
-    /* TODO: Renable when CI is on Ubuntu 24.04 or higher
     printf("Binary: %b\n", 42);
     printf("Binary: %B\n", 42);
-    */
     printf("Negative int: %d\n", -42);
     printf("Percent: %%\n");
     printf("Bad UTF-8: \xc0\x80\n");
