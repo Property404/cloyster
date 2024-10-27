@@ -10,8 +10,8 @@ edition = "2021"
 unsafe_op_in_unsafe_fn = "deny"
 
 [dependencies]
-bitflags = "2.5.0"
-enumn = "0.1.13"
+bitflags = "2.6.0"
+enumn = "0.1.14"
 spin = { version = "0.9.8", default-features = false, features = ["spin_mutex"] }
 syscalls = { version = "0.6.18", default-features = false }
 
