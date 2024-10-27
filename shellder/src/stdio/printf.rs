@@ -13,7 +13,7 @@ pub(crate) trait VaListLike {
     unsafe fn next_ptr(&mut self) -> usize;
 }
 
-impl<'a> VaListLike for VaListImpl<'a> {
+impl VaListLike for VaListImpl<'_> {
     unsafe fn next_int(&mut self) -> c_int {
         unsafe { self.arg::<c_int>() }
     }
