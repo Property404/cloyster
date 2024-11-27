@@ -1,6 +1,6 @@
 use core::{
     cmp::{self, Ordering},
-    ffi::{c_char, CStr},
+    ffi::{CStr, c_char},
     ptr::NonNull,
 };
 

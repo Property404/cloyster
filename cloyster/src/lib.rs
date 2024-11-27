@@ -37,6 +37,6 @@ fn panic(info: &PanicInfo) -> ! {
 #[lang = "eh_personality"]
 fn rust_eh_personality() {}
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(non_snake_case)]
 pub extern "C" fn _Unwind_Resume(_ex_obj: *mut ()) {}

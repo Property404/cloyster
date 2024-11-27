@@ -4,7 +4,7 @@ use spin::Mutex;
 
 static AT_EXIT_FNS: Mutex<RefCell<Vec<extern "C" fn()>>> = Mutex::new(RefCell::new(Vec::new()));
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn atexit(function: extern "C" fn()) -> c_int {
     let vec = AT_EXIT_FNS.lock();
     let mut vec = vec.borrow_mut();
@@ -12,7 +12,7 @@ extern "C" fn atexit(function: extern "C" fn()) -> c_int {
     0
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub(crate) extern "C" fn exit(status: c_int) -> ! {
     let vec = AT_EXIT_FNS.lock();
     let mut vec = vec.borrow_mut();
@@ -27,7 +27,7 @@ pub(crate) extern "C" fn exit(status: c_int) -> ! {
 }
 
 /// Causes abnormal process termination
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn abort() -> ! {
     shellder::stdlib::abort()
 }

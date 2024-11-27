@@ -3,7 +3,7 @@ use crate::{
     malloc::{free, malloc},
 };
 use core::{
-    ffi::{c_char, c_int, c_long, c_void, CStr, VaListImpl},
+    ffi::{CStr, VaListImpl, c_char, c_int, c_long, c_void},
     mem,
     ptr::{self, NonNull},
 };

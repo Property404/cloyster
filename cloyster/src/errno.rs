@@ -7,7 +7,7 @@ use spin::Mutex;
 
 static ERRNO: Mutex<RefCell<c_int>> = Mutex::new(RefCell::new(0));
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 // This is unsafe because it leaks the inner reference to errno,
 // which is not updated atomically
 // Really, we need thread_locals

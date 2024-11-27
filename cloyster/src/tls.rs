@@ -3,16 +3,16 @@ use core::{
     ffi::c_void,
     ptr::{self, NonNull},
 };
-use shellder::types::*;
 use shellder::Errno;
+use shellder::types::*;
 
-extern "C" {
+unsafe extern "C" {
     static __tdata_start: c_void;
 }
 
 const STATIC_TLS_SIZE: usize = 0x2000;
 
-#[link_section = ".gnu.linkonce.td.tdata_end"]
+#[unsafe(link_section = ".gnu.linkonce.td.tdata_end")]
 static mut TDATA_END: () = ();
 
 unsafe fn set_thread_pointer(addr: *const c_void) -> Result<(), Errno> {

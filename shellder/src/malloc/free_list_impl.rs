@@ -170,8 +170,10 @@ impl<T: MemoryExtender> FreeListAllocator<T> {
                             .as_mut()
                             .expect("Invalid ptr")
                     };
-                    assert!((ptr::from_mut(newnoderef) as usize + HDR_SIZE)
-                        .is_aligned_to(requested_align));
+                    assert!(
+                        (ptr::from_mut(newnoderef) as usize + HDR_SIZE)
+                            .is_aligned_to(requested_align)
+                    );
                     *newnoderef = (*noderef).clone();
                     if let Some(mut prev) = newnoderef.prev_node {
                         let prev = unsafe { prev.as_mut() };

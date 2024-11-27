@@ -1,6 +1,6 @@
 use crate::errno::Errno;
 use core::{
-    ffi::{c_char, c_int, CStr, VaListImpl},
+    ffi::{CStr, VaListImpl, c_char, c_int},
     fmt::{self, Write},
     ptr::NonNull,
 };

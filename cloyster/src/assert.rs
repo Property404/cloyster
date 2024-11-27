@@ -1,4 +1,4 @@
-use core::ffi::{c_char, c_uint, CStr};
+use core::ffi::{CStr, c_char, c_uint};
 // Abort the program after false assertion
 //a
 // C signature:
@@ -6,7 +6,7 @@ use core::ffi::{c_char, c_uint, CStr};
 // function);`
 //
 // SAFETY: all pointers must be valid null-terminated strings
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn __assert_fail(
     assertion: *const c_char,
     file: *const c_char,

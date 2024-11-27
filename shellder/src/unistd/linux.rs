@@ -1,6 +1,6 @@
 use crate::{errno::Errno, types::*};
 use core::{
-    ffi::{c_int, c_void, CStr},
+    ffi::{CStr, c_int, c_void},
     ptr::{self, NonNull},
 };
 use syscalls::Sysno;

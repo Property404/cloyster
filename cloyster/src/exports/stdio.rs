@@ -1,13 +1,13 @@
 use crate::errno;
 use core::{
-    ffi::{c_char, c_int, c_long, c_void, CStr, VaListImpl},
+    ffi::{CStr, VaListImpl, c_char, c_int, c_long, c_void},
     ptr::{self, NonNull},
 };
 use shellder::stdio::File;
 
 const EOF: c_int = -1;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn puts(s: *const c_char) -> c_int {
     assert!(!s.is_null());
@@ -19,7 +19,7 @@ unsafe extern "C" fn puts(s: *const c_char) -> c_int {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fputs(s: *const c_char, stream: Option<NonNull<File>>) -> c_int {
     assert!(!s.is_null());
@@ -33,7 +33,7 @@ unsafe extern "C" fn fputs(s: *const c_char, stream: Option<NonNull<File>>) -> c
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn clearerr(stream: Option<NonNull<File>>) {
     let stream = stream.expect("Unexpected null arg to `clearerr()`");
     unsafe {
@@ -41,21 +41,21 @@ unsafe extern "C" fn clearerr(stream: Option<NonNull<File>>) {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn ferror(stream: Option<NonNull<File>>) -> c_int {
     let stream = stream.expect("Unexpected null arg to `ferror()`");
     unsafe { shellder::stdio::ferror(stream).as_positive() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn feof(stream: Option<NonNull<File>>) -> c_int {
     let stream = stream.expect("Unexpected null arg to `feof()`");
     unsafe { shellder::stdio::feof(stream).into() }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 extern "C" fn putchar(c: c_int) -> c_int {
     match shellder::stdio::putchar(c) {
@@ -65,13 +65,13 @@ extern "C" fn putchar(c: c_int) -> c_int {
 }
 
 // This is an alias for `fputc`
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn putc(c: c_int, stream: Option<NonNull<File>>) -> c_int {
     unsafe { fputc(c, stream) }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fputc(c: c_int, stream: Option<NonNull<File>>) -> c_int {
     unsafe {
@@ -82,7 +82,7 @@ unsafe extern "C" fn fputc(c: c_int, stream: Option<NonNull<File>>) -> c_int {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn getc(stream: Option<NonNull<File>>) -> c_int {
     unsafe {
@@ -93,7 +93,7 @@ unsafe extern "C" fn getc(stream: Option<NonNull<File>>) -> c_int {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 extern "C" fn getchar() -> c_int {
     match shellder::stdio::getchar() {
@@ -102,13 +102,13 @@ extern "C" fn getchar() -> c_int {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn printf(fmt: *const c_char, args: ...) -> c_int {
     unsafe { vprintf(fmt, args) }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn vprintf(fmt: *const c_char, args: VaListImpl) -> c_int {
     assert!(!fmt.is_null());
@@ -119,13 +119,13 @@ unsafe extern "C" fn vprintf(fmt: *const c_char, args: VaListImpl) -> c_int {
     .unwrap_or_else(|err| err.as_negative())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fprintf(stream: *mut File, fmt: *const c_char, args: ...) -> c_int {
     unsafe { vfprintf(stream, fmt, args) }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn sprintf(s: Option<NonNull<c_char>>, fmt: *const c_char, args: ...) -> c_int {
     assert!(!fmt.is_null());
@@ -137,7 +137,7 @@ unsafe extern "C" fn sprintf(s: Option<NonNull<c_char>>, fmt: *const c_char, arg
     .unwrap_or_else(|err| err.as_negative())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn snprintf(
     s: Option<NonNull<c_char>>,
@@ -154,7 +154,7 @@ unsafe extern "C" fn snprintf(
     .unwrap_or_else(|err| err.as_negative())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn vfprintf(stream: *mut File, fmt: *const c_char, args: VaListImpl) -> c_int {
     assert!(!fmt.is_null());
@@ -166,7 +166,7 @@ unsafe extern "C" fn vfprintf(stream: *mut File, fmt: *const c_char, args: VaLis
     .unwrap_or_else(|err| err.as_negative())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> *mut File {
     assert!(!pathname.is_null());
@@ -182,7 +182,7 @@ unsafe extern "C" fn fopen(pathname: *const c_char, mode: *const c_char) -> *mut
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fread(
     ptr: Option<NonNull<c_void>>,
@@ -204,7 +204,7 @@ unsafe extern "C" fn fread(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fwrite(
     ptr: *const c_void,
@@ -226,7 +226,7 @@ unsafe extern "C" fn fwrite(
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fseek(stream: Option<NonNull<File>>, offset: c_long, whence: c_int) -> c_int {
     let stream = stream.expect("Unexpected null arg to `fread()`");
@@ -242,7 +242,7 @@ unsafe extern "C" fn fseek(stream: Option<NonNull<File>>, offset: c_long, whence
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn ftell(file: Option<NonNull<File>>) -> c_long {
     let file = file.expect("Unexpected null arg to `fread()`");
@@ -258,7 +258,7 @@ unsafe extern "C" fn ftell(file: Option<NonNull<File>>) -> c_long {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[must_use]
 unsafe extern "C" fn fclose(file: Option<NonNull<File>>) -> c_int {
     let file = file.expect("Unexpected null arg to `fread()`");

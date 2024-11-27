@@ -10,11 +10,11 @@ static mut STDOUT: File = File::stdout();
 static mut STDERR: File = File::stderr();
 
 // TODO: these should definitely be thread local pointers
-#[no_mangle]
+#[unsafe(no_mangle)]
 static mut stdin: usize = 0;
-#[no_mangle]
+#[unsafe(no_mangle)]
 static mut stdout: usize = 0;
-#[no_mangle]
+#[unsafe(no_mangle)]
 static mut stderr: usize = 0;
 
 pub(crate) fn init() {
