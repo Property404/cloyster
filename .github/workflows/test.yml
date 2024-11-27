@@ -28,6 +28,9 @@ jobs:
       - name: Switch to nightly
         run: rustup default nightly
 
+      - name: Add fmt
+        run: rustup component add rustfmt
+
       - name: Lint
         run: cargo fmt --check
 
