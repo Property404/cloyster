@@ -25,11 +25,11 @@ jobs:
       - name: Display compiler version
         run: gcc --version
 
-      - name: Lint
-        run: cargo fmt --check
-
       - name: Switch to nightly
         run: rustup default nightly
+
+      - name: Lint
+        run: cargo fmt --check
 
       - name: Clippy
         run: rustup component add clippy &&
